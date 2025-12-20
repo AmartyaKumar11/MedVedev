@@ -75,11 +75,11 @@ The system creates this structure in `C:\Users\ASUS\Desktop\PRJ-3\facemod\face`:
 
 ```
 face/
-├── John_Doe/
+├── User1/
 │   ├── front.jpg
 │   └── embeddings.pkl  # 512-dimensional vector
 │
-├── Jane_Smith/
+├── uh idk/
 │   └── ...
 ```
 
