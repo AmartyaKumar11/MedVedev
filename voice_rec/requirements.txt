@@ -1,0 +1,7 @@
+sounddevice
+soundfile
+torch
+numpy
+speechbrain
+openai-whisper
+pydub

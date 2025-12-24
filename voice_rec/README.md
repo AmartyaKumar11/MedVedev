@@ -17,27 +17,29 @@ The design separates **speaker identification** from **speech-to-text**, making 
 - **Text-independent speaker recognition** using ECAPA-TDNN
 - **Accurate transcription** with OpenAI Whisper
 - **Speaker-aware transcript generation**
-- **Overlapping audio chunking** for smooth speaker transitions
+- **Silence-based audio segmentation** for natural speech boundaries
+- **Highest-confidence speaker assignment** for all segments
 - **Centroid-based speaker enrollment** for robustness
-- **Threshold-based identification** to prevent false positives
+- **Sequential file naming** (convo_1, convo_2, ...) for easy tracking
 
 ---
 
 ## Pipeline
 
 1. **Record** conversation audio (10 seconds)
-2. **Split** audio into overlapping chunks (2s chunks, 1s hop)
-3. **Extract** speaker embeddings using ECAPA-TDNN
-4. **Match** chunks to enrolled speaker centroids
-5. **Build** time → speaker timeline
-6. **Transcribe** full audio with Whisper
-7. **Align** transcript segments with speaker timeline
-8. **Output** speaker-labeled transcript
+2. **Segment** audio by silence detection (dynamic speech segments)
+3. **Extract** speaker embeddings using ECAPA-TDNN for each segment
+4. **Match** segments to enrolled speaker centroids (highest confidence)
+5. **Transcribe** full audio with Whisper
+6. **Align** transcript segments with speaker timeline
+7. **Output** speaker-labeled transcript (sequential naming: convo_1, convo_2, ...)
 
 ```
-Microphone → Raw Audio → Overlapping Chunks → ECAPA Embeddings
+Microphone → Raw Audio → Silence-Based Segmentation → ECAPA Embeddings
     ↓
 Speaker Timeline + Whisper Transcription → Speaker-Labeled Transcript
+    ↓
+Sequential Files: convo_1.txt, convo_1.json
 ```
 
 ---
@@ -89,8 +91,11 @@ voice_rec/
 │   │   └── ...
 │   │
 │   └── outputs/                    # Results
-│       ├── convo_labeled.txt       # Speaker-labeled transcript
-│       └── convo_segments.json     # Structured transcript with metadata
+│       ├── convo_1.txt              # First conversation transcript
+│       ├── convo_1.json             # First conversation details
+│       ├── convo_2.txt              # Second conversation transcript
+│       ├── convo_2.json             # Second conversation details
+│       └── ...                      # Sequential numbering continues
 │
 ├── pretrained_models/              # ECAPA-TDNN model cache
 │
@@ -128,14 +133,15 @@ The system will:
 
 ### 3. View Results
 
-- **Labeled Transcript**: `data/outputs/convo_labeled.txt`
-- **Detailed JSON**: `data/outputs/convo_segments.json`
+- **Labeled Transcript**: `data/outputs/convo_1.txt`, `convo_2.txt`, etc.
+- **Detailed JSON**: `data/outputs/convo_1.json`, `convo_2.json`, etc.
+
+Each run automatically creates the next numbered conversation file.
 
 Example output:
 ```
-Deepu: Hi my name is Deepu
-Receptionist: How can I help you today
-Deepu: I want to book an appointment
+trial: Hi, hello hello
+deeepu: Talk to me bro
 ```
 
 ---
@@ -148,9 +154,10 @@ Key parameters in `conversation_analyzer.py`:
 |-----------|---------|---------|
 | `SAMPLE_RATE` | 16000 | Required by ECAPA & Whisper |
 | `RECORD_SECONDS` | 10 | Total conversation length |
-| `CHUNK_SIZE` | 2.0 | Duration per speaker chunk (seconds) |
-| `CHUNK_HOP` | 1.0 | Overlap between chunks (seconds) |
-| `SPEAKER_THRESHOLD` | 0.70 | Minimum similarity to accept identity |
+| `SILENCE_THRESH` | -50 dB | Threshold for silence detection |
+| `MIN_SILENCE_LEN` | 500 ms | Minimum silence duration to split |
+| `MIN_SEGMENT_LEN` | 300 ms | Minimum speech segment length |
+| `SPEAKER_THRESHOLD` | N/A | Always uses highest confidence speaker |
 
 ---
 
@@ -179,16 +186,17 @@ Key parameters in `conversation_analyzer.py`:
 - At runtime, compute centroid (mean) of all embeddings
 
 ### Speaker Identification
-1. Split audio into overlapping chunks (2s, hop 1s)
-2. Extract ECAPA embedding for each chunk
-3. Compare with all speaker centroids using cosine similarity
-4. Assign speaker with highest similarity (if above threshold)
-5. Label as "Unknown" if below threshold
+1. Segment audio using silence detection (pydub)
+2. Fallback to full audio if no silence detected
+3. Extract ECAPA embedding for each segment
+4. Compare with all speaker centroids using cosine similarity
+5. Always assign speaker with highest confidence score
+6. Display all speaker scores for transparency
 
 ### Transcript Alignment
 1. Transcribe full audio with Whisper
 2. For each transcript segment, find midpoint timestamp
-3. Match to nearest speaker chunk in timeline
+3. Match to nearest speaker segment in timeline
 4. Assign speaker to transcript segment
 
 ---
@@ -197,18 +205,20 @@ Key parameters in `conversation_analyzer.py`:
 
 1. **Speaker first, text later** – Avoids word bias in identification
 2. **Centroids over single samples** – Improves robustness
-3. **Overlapping chunks** – Smoother speaker transitions
-4. **Thresholding** – Prevents false positives
-5. **Midpoint alignment** – Simple and effective
+3. **Silence-based segmentation** – Natural speech boundaries
+4. **Highest confidence assignment** – No "Unknown" labels, always identifies best match
+5. **Sequential file naming** – Easy tracking of conversation history
+6. **Midpoint alignment** – Simple and effective
 
 ---
 
 ## Limitations
 
-- **Not a full diarization engine** – Fixed chunk size
-- **No overlapping speech handling** – Single speaker per chunk
+- **Not a full diarization engine** – Silence-based segmentation
+- **No overlapping speech handling** – Single speaker per segment
 - **Not real-time** – Post-recording processing
 - **10-second conversations** – Designed for short interactions
+- **Always assigns a speaker** – No threshold filtering for unknown voices
 
 ---
 
@@ -235,13 +245,13 @@ Key parameters in `conversation_analyzer.py`:
 **Solution**: 
 - Enroll more samples per speaker (5+ recommended)
 - Ensure clear audio during enrollment
-- Adjust `SPEAKER_THRESHOLD` (try 0.65-0.75)
+- Check similarity scores in output for debugging
 
-### Issue: "Unknown" speakers appearing
+### Issue: Wrong speaker assigned
 **Solution**: 
-- Check if speaker is enrolled
-- Lower `SPEAKER_THRESHOLD` slightly
-- Re-enroll with better quality audio
+- System always assigns highest confidence speaker
+- Check all_scores in JSON output to see competing scores
+- Re-enroll with better quality audio if scores are too close
 
 ---
 
