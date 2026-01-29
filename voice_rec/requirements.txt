@@ -1,3 +1,4 @@
+streamlit
 sounddevice
 soundfile
 torch
@@ -5,3 +6,4 @@ numpy
 speechbrain
 openai-whisper
 pydub
+huggingface-hub==0.20.0

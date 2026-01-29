@@ -1,71 +1,290 @@
-# Speaker-Aware Conversation Analyzer
+# PRJ3 Voice Recognition System
 
-A modular system that records conversations, identifies speakers using ECAPA-TDNN embeddings, and produces speaker-labeled transcripts using Whisper.
+A modern **Streamlit-based** real-time speaker recognition and transcription system with GPU acceleration. Identifies speakers using ECAPA-TDNN embeddings and transcribes speech using OpenAI Whisper with live visualization.
 
 ---
 
 ## Overview
 
-This system records short conversations, identifies **who is speaking at each moment** using a speaker recognition model (ECAPA-TDNN), transcribes the speech using **Whisper**, and produces a **speaker-labeled transcript**.
+This system provides a **web-based UI** for real-time conversation transcription with automatic speaker identification. It uses **ECAPA-TDNN** for voice recognition and **Whisper** for speech-to-text, with full GPU acceleration support.
 
-The design separates **speaker identification** from **speech-to-text**, making the system modular, interpretable, and extensible.
+Key capabilities:
+- **Live transcription mode** with real-time speaker identification
+- **Multi-language support** (English, Hindi, Spanish, French, and 99+ more)
+- **Model selection** (Tiny to Large Whisper models)
+- **Audio device selection** (choose microphone and speakers)
+- **Speaker enrollment** through simple voice samples
+- **Automatic highest-confidence assignment** - always identifies the most likely speaker
 
 ---
 
 ## Features
 
-- **Text-independent speaker recognition** using ECAPA-TDNN
-- **Accurate transcription** with OpenAI Whisper
-- **Speaker-aware transcript generation**
-- **Silence-based audio segmentation** for natural speech boundaries
-- **Highest-confidence speaker assignment** for all segments
-- **Centroid-based speaker enrollment** for robustness
-- **Sequential file naming** (convo_1, convo_2, ...) for easy tracking
+### 🎤 Live Mode
+- **Real-time transcription** with 3-second audio chunks
+- **Speaker identification** with confidence scores and similarity metrics
+- **Live transcript display** with auto-refresh
+- **Color-coded speakers** (identified in blue, unknown in gray)
+- **Debug mode** showing all speaker similarity scores
+- **Auto-save** conversations when stopped
+
+### ➕ Voice Enrollment
+- **Simple 5-second recording** for voice samples
+- **Multiple samples** per person for better accuracy
+- **Visual progress** during recording
+- **Instant feedback** on enrollment success
+
+### 🤖 Model Settings
+- **Whisper model selector**: Tiny, Base, Small (default), Medium, Large
+- **Language selector**: Auto-detect, English, Hindi, and 99+ languages
+- **Dynamic model loading** with one-click reload
+
+### 🎛️ Audio Settings
+- **Microphone selection** from all available input devices
+- **Speaker selection** from all available output devices
+- **Default device indicators**
+
+### 📁 Transcript Management
+- **Sequential naming** (convo_1, convo_2, etc.)
+- **Dual format** (.txt for reading, .json for analysis)
+- **Built-in viewer** with expandable transcripts
+- **Download capability** for all saved conversations
 
 ---
 
-## Pipeline
+## Technology Stack
 
-1. **Record** conversation audio (10 seconds)
-2. **Segment** audio by silence detection (dynamic speech segments)
-3. **Extract** speaker embeddings using ECAPA-TDNN for each segment
-4. **Match** segments to enrolled speaker centroids (highest confidence)
-5. **Transcribe** full audio with Whisper
-6. **Align** transcript segments with speaker timeline
-7. **Output** speaker-labeled transcript (sequential naming: convo_1, convo_2, ...)
-
-```
-Microphone → Raw Audio → Silence-Based Segmentation → ECAPA Embeddings
-    ↓
-Speaker Timeline + Whisper Transcription → Speaker-Labeled Transcript
-    ↓
-Sequential Files: convo_1.txt, convo_1.json
-```
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| **UI Framework** | Streamlit | Modern web interface |
+| **Speaker Recognition** | SpeechBrain ECAPA-TDNN | Voice identification |
+| **Speech-to-Text** | OpenAI Whisper | Multilingual transcription |
+| **Audio Processing** | sounddevice, pydub | Real-time audio capture |
+| **Similarity Metric** | Cosine Similarity | Speaker matching |
+| **GPU Acceleration** | PyTorch CUDA | Fast inference |
 
 ---
 
 ## Installation
 
 ### Prerequisites
-- Python 3.8+
+- Python 3.10+
+- NVIDIA GPU with CUDA support (optional but recommended)
 - FFmpeg (for audio processing)
 
 ### Setup
 
-1. Clone the repository and navigate to the voice_rec folder
-2. Create a virtual environment:
+1. **Clone and navigate**:
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   cd voice_rec
    ```
 
-3. Install dependencies:
+2. **Install dependencies**:
    ```bash
-   pip install torch torchaudio
-   pip install speechbrain
-   pip install openai-whisper
-   pip install sounddevice numpy scipy
+   pip install streamlit sounddevice soundfile pydub
+   pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+   pip install openai-whisper speechbrain huggingface-hub==0.20.0
    ```
+
+3. **Run the application**:
+   ```bash
+   streamlit run PRJ3_voice.py
+   ```
+
+4. **Access the web interface**:
+   - Open your browser to `http://localhost:8501`
+
+---
+
+## Usage
+
+### 1. Enroll Speakers
+
+Navigate to the **"Add New Voice"** tab:
+1. Enter the speaker's name
+2. Click **"Record Voice Sample"**
+3. Speak clearly for 5 seconds
+4. Repeat 2-3 times for better accuracy
+
+### 2. Configure Settings
+
+In the **sidebar**:
+- Select **Whisper model** (Small recommended for RTX 3060)
+- Choose **language** (Auto-detect or specific language)
+- Select **microphone** from available devices
+
+### 3. Start Live Recording
+
+In the **"Live Mode"** tab:
+1. Click **"▶️ Start Live Recording"**
+2. Speak naturally - transcripts appear in real-time
+3. See speaker names, confidence scores, and similarity metrics
+4. Click **"⏹️ Stop Recording"** to save
+
+### 4. View Transcripts
+
+In the **"View Transcripts"** tab:
+- Browse all saved conversations
+- Expand to view full content
+- Download any transcript
+
+---
+---
+
+## Project Structure
+
+```
+voice_rec/
+├── PRJ3_voice.py                   # Main Streamlit application
+├── requirements.txt                # Python dependencies
+├── README.md                       # This file
+│
+├── data/
+│   ├── embeddings_ecapa/           # Enrolled speaker voice prints
+│   │   ├── <speaker_name>/
+│   │   │   ├── 1.npy              # Voice embedding sample 1
+│   │   │   ├── 2.npy              # Voice embedding sample 2
+│   │   │   └── 3.npy              # Voice embedding sample 3
+│   │
+│   ├── outputs/                    # Saved transcripts
+│   │   ├── convo_1.txt            # Human-readable transcript
+│   │   ├── convo_1.json           # Detailed conversation data
+│   │   └── ...
+│   │
+│   └── raw_audio/                  # Temporary audio files
+│       └── temp_live.wav
+│
+├── pretrained_models/              # Downloaded model cache
+│   └── ecapa-voxceleb/
+│
+└── scripts/                        # Legacy/utility scripts
+    ├── conversation_analyzer.py
+    ├── ecapa_pipeline.py
+    └── ...
+```
+
+---
+
+## Technical Details
+
+### Speaker Recognition
+- **Model**: ECAPA-TDNN (SpeechBrain implementation)
+- **Embedding dimension**: 192
+- **Similarity metric**: Cosine similarity
+- **Recognition threshold**: 0.50 (adjustable)
+- **Strategy**: Always assigns highest-confidence speaker
+
+### Speech-to-Text
+- **Models available**: Tiny (39M), Base (74M), Small (244M), Medium (769M), Large (1550M)
+- **Default**: Small (balanced speed/accuracy)
+- **Languages**: 99+ supported with auto-detection
+- **Chunk duration**: 3 seconds for live mode
+- **Format**: 16kHz mono audio
+
+### Audio Processing
+- **Sample rate**: 16,000 Hz
+- **Channels**: 1 (mono)
+- **Format**: float32
+- **Silence detection**: -50 dB threshold
+- **Min segment**: 300ms
+
+---
+
+## GPU Support
+
+The system automatically detects and uses NVIDIA GPUs:
+- **CUDA detection**: Automatic
+- **Model acceleration**: Both ECAPA-TDNN and Whisper
+- **Recommended VRAM**:
+  - Tiny/Base: 1-2 GB
+  - Small: 2-3 GB
+  - Medium: 4-6 GB
+  - Large: 6-10 GB
+
+**RTX 3060 (6GB)**: Recommended to use Small or Medium models
+
+---
+
+## Troubleshooting
+
+### No speakers detected
+- Make sure you've enrolled at least one speaker
+- Check `data/embeddings_ecapa/` folder has speaker directories
+
+### Always showing "Unknown"
+- Lower the threshold (currently 0.50)
+- Enroll more voice samples per speaker
+- Check debug scores to see actual similarity values
+
+### Live mode not working
+- Verify microphone permissions
+- Select correct input device in sidebar
+- Check terminal for error messages
+
+### Slow transcription
+- Switch to smaller Whisper model (Base or Tiny)
+- Ensure GPU is being detected (check sidebar)
+- Close other GPU-intensive applications
+
+### Import errors
+- Install compatible version: `pip install huggingface-hub==0.20.0`
+- Update SpeechBrain: `pip install --upgrade speechbrain`
+
+---
+
+## Performance
+
+### Whisper Model Comparison
+
+| Model | Size | VRAM | Speed | Accuracy |
+|-------|------|------|-------|----------|
+| Tiny | 39M | ~500MB | Very Fast | Good |
+| Base | 74M | ~1GB | Fast | Better |
+| **Small** | 244M | ~2GB | **Balanced** | **Great** |
+| Medium | 769M | ~5GB | Slow | Excellent |
+| Large | 1550M | ~10GB | Very Slow | Best |
+
+### Real-time Performance (RTX 3060)
+- **Small model**: ~2-3 seconds processing per 3-second chunk
+- **Speaker recognition**: <100ms per segment
+- **Total latency**: 2-5 seconds (near real-time)
+
+---
+
+## Future Enhancements
+
+- [ ] Multi-speaker diarization without enrollment
+- [ ] Custom threshold slider in UI
+- [ ] Audio playback with speaker highlighting
+- [ ] Export to SRT/VTT subtitle formats
+- [ ] Real-time noise reduction
+- [ ] Batch processing mode
+- [ ] Speaker profile management (delete/rename)
+
+---
+
+## Credits
+
+- **OpenAI Whisper**: Speech recognition
+- **SpeechBrain**: Speaker recognition (ECAPA-TDNN)
+- **Streamlit**: Web interface framework
+- **PyTorch**: Deep learning backend
+
+---
+
+## License
+
+This project is for educational and research purposes.
+
+---
+
+## Author
+
+Developed as part of PRJ-3 project suite
+- Face Recognition System → `facemod/`
+- Voice Recognition System → `voice_rec/` (this project)
+
+Last Updated: January 29, 2026
 
 ---
 
