@@ -23,7 +23,7 @@ RAW_AUDIO = Path("../data/raw_audio/conversation.wav")
 OUTPUT_DIR = Path("../data/outputs")
 EMB_ROOT = Path("../data/embeddings_ecapa")
 OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
-
+  
 # ================= MODELS =================
 print("⏳ Loading ECAPA-TDNN model...")
 classifier = EncoderClassifier.from_hparams(
