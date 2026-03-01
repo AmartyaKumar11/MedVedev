@@ -7,6 +7,7 @@ import whisper
 from pathlib import Path
 from numpy.linalg import norm
 from speechbrain.inference.speaker import EncoderClassifier
+from speechbrain.utils.fetching import LocalStrategy
 from pydub import AudioSegment
 from pydub.silence import detect_nonsilent
 import json
@@ -16,9 +17,11 @@ import queue
 import time
 import io
 from multiprocessing import Manager
+from scipy.signal import resample_poly
 
 # ================= CONFIG =================
-SAMPLE_RATE = 16000
+SAMPLE_RATE = 16000  # Required by ECAPA & Whisper
+RECORD_RATE = 44100  # Record at 44.1 kHz (widely supported); resample to SAMPLE_RATE
 ENROLL_DURATION = 5  # seconds for enrollment
 SILENCE_THRESH = -50
 MIN_SILENCE_LEN = 500
@@ -33,6 +36,15 @@ EMB_ROOT = BASE_DIR / "data" / "embeddings_ecapa"
 RAW_AUDIO_DIR.mkdir(exist_ok=True, parents=True)
 OUTPUT_DIR.mkdir(exist_ok=True, parents=True)
 EMB_ROOT.mkdir(exist_ok=True, parents=True)
+
+
+def resample_to_16k(audio: np.ndarray, from_rate: int) -> np.ndarray:
+    """Resample audio to 16 kHz (required by ECAPA/Whisper)."""
+    if from_rate == SAMPLE_RATE:
+        return audio.astype(np.float32) if audio.dtype != np.float32 else audio
+    # resample_poly(x, up, down) -> length = len(x) * up / down
+    out = resample_poly(audio.astype(np.float64), SAMPLE_RATE, from_rate)
+    return out.astype(np.float32)
 
 # ================= SESSION STATE INIT =================
 if 'recording' not in st.session_state:
@@ -89,7 +101,8 @@ def load_models(model_size='large'):
             classifier = EncoderClassifier.from_hparams(
                 source="speechbrain/spkrec-ecapa-voxceleb",
                 savedir="pretrained_models/ecapa-voxceleb",
-                run_opts={"device": "cuda" if torch.cuda.is_available() else "cpu"}
+                run_opts={"device": "cuda" if torch.cuda.is_available() else "cpu"},
+                local_strategy=LocalStrategy.COPY,
             )
         
         with st.spinner(f"Loading Whisper {model_size.capitalize()} model (this may take a while)..."):
@@ -228,10 +241,10 @@ def enroll_speaker(name, classifier, input_device=None):
     
     st.info(f"🎤 Recording for {ENROLL_DURATION} seconds... Speak clearly!")
     
-    # Record audio with selected device
+    # Record at RECORD_RATE (44.1 kHz) - most devices support it; 16 kHz often fails
     audio = sd.rec(
-        int(ENROLL_DURATION * SAMPLE_RATE),
-        samplerate=SAMPLE_RATE,
+        int(ENROLL_DURATION * RECORD_RATE),
+        samplerate=RECORD_RATE,
         channels=1,
         dtype="float32",
         device=input_device
@@ -240,8 +253,11 @@ def enroll_speaker(name, classifier, input_device=None):
     # Wait for recording to complete
     sd.wait()
     
+    # Resample to 16 kHz for ECAPA
+    audio_16k = resample_to_16k(audio.flatten(), RECORD_RATE)
+    
     # Get embedding
-    embedding = get_embedding_from_audio(audio.flatten(), classifier)
+    embedding = get_embedding_from_audio(audio_16k, classifier)
     
     # Save
     existing = list(person_dir.glob("*.npy"))
@@ -261,7 +277,7 @@ def process_live_audio(classifier, whisper_model, speakers, audio_queue, transcr
     """Process audio chunks for live transcription"""
     # Language is passed as parameter to avoid session_state access from thread
     audio_buffer = []
-    chunk_samples = int(chunk_duration * SAMPLE_RATE)
+    chunk_samples = int(chunk_duration * RECORD_RATE)  # collect at record rate
     
     while not stop_flag[0]:
         try:
@@ -274,12 +290,15 @@ def process_live_audio(classifier, whisper_model, speakers, audio_queue, transcr
                 audio_data = np.array(audio_buffer[:chunk_samples], dtype=np.float32)
                 audio_buffer = audio_buffer[chunk_samples:]
                 
+                # Resample to 16 kHz for ECAPA/Whisper
+                audio_16k = resample_to_16k(audio_data, RECORD_RATE)
+                
                 # Check if there's actual speech (simple energy check)
-                if np.max(np.abs(audio_data)) < 0.01:
+                if np.max(np.abs(audio_16k)) < 0.01:
                     continue
                 
                 # Get speaker identity
-                segments = segment_audio_by_silence(audio_data, SAMPLE_RATE)
+                segments = segment_audio_by_silence(audio_16k, SAMPLE_RATE)
                 
                 if segments:
                     # Get speaker from first segment
@@ -291,7 +310,7 @@ def process_live_audio(classifier, whisper_model, speakers, audio_queue, transcr
                 
                 # Transcribe
                 temp_path = RAW_AUDIO_DIR / "temp_live.wav"
-                sf.write(temp_path, audio_data, SAMPLE_RATE)
+                sf.write(temp_path, audio_16k, SAMPLE_RATE)
                 
                 # Use language parameter (None for auto-detect)
                 lang = None if language == 'auto' else language
@@ -344,9 +363,9 @@ def start_live_recording(classifier, whisper_model, speakers, input_device=None,
     st.session_state.audio_queue = audio_queue
     st.session_state.stop_flag = stop_flag
     
-    # Start audio stream with proper callback signature and selected device
+    # Record at RECORD_RATE (44.1 kHz); resample to 16 kHz in processing
     stream = sd.InputStream(
-        samplerate=SAMPLE_RATE,
+        samplerate=RECORD_RATE,
         channels=1,
         dtype='float32',
         device=input_device,
