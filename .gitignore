@@ -48,6 +48,9 @@ Thumbs.db
 
 # Pretrained models
 pretrained_models/
+backend/torch-*.whl
+backend/torchvision-*.whl
+backend/torchaudio-*.whl
 
 # Output directories
 output/
