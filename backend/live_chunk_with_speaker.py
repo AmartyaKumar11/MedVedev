@@ -8,8 +8,8 @@ from pydub import AudioSegment
 from speechbrain.inference import EncoderClassifier
 
 # Update these paths if your files live elsewhere.
-AUDIO_PATH = r"..\GAS0003.mp3"
-DOCTOR_ENROLL_PATH = r"..\doctor_enroll.mp3"
+AUDIO_PATH = r"..\deepu-amartya.mp3"
+DOCTOR_ENROLL_PATH = r"..\doctor-amartya.mp3"
 
 
 def audiosegment_to_tensor(segment: AudioSegment) -> torch.Tensor:
@@ -70,7 +70,7 @@ def main() -> int:
     doctor_emb = get_embedding(spk_model, enroll_audio, device)
 
     chunk_ms = 5_000  # 5 seconds
-    threshold = 0.75
+    threshold = 0.65
 
     for idx, chunk in iter_chunks(main_audio, chunk_ms):
         chunk_start = time.perf_counter()

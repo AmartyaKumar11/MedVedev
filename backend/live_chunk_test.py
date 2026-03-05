@@ -5,7 +5,7 @@ from faster_whisper import WhisperModel
 from pydub import AudioSegment
 
 # Update this to point to your MP3 file if needed.
-AUDIO_PATH = r"..\GAS0003.mp3"
+AUDIO_PATH = r"..\deepu-amartya.mp3"
 
 
 def iter_chunks(audio: AudioSegment, chunk_ms: int):

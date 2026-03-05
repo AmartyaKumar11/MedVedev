@@ -1,6 +1,6 @@
 from pyannote.audio import Pipeline
 
-AUDIO_PATH = r"..\GAS0003.mp3"
+AUDIO_PATH = r"..\deepu-amartya.mp3"
 
 
 def main() -> int:

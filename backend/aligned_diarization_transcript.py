@@ -1,7 +1,7 @@
 from pyannote.audio import Pipeline
 from faster_whisper import WhisperModel
 
-AUDIO_PATH = "..\GAS0003.mp3"
+AUDIO_PATH = r"..\deepu-amartya.mp3"
 
 
 def transcribe(path: str):

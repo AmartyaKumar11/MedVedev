@@ -4,7 +4,7 @@ import torch
 from faster_whisper import WhisperModel
 
 # Update this if your audio file lives elsewhere.
-AUDIO_PATH = r"..\GAS0003.mp3"
+AUDIO_PATH = r"..\deepu-amartya.mp3"
 
 
 def _is_cuda_oom(err: BaseException) -> bool:
