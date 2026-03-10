@@ -1,7 +1,9 @@
 import time
+from collections import deque
 from io import BytesIO
 
 import re
+import statistics
 import torch
 import torch.nn.functional as F
 from faster_whisper import WhisperModel
@@ -16,6 +18,9 @@ DOCTOR = "DOCTOR"
 OTHER = "OTHER"
 
 RMS_THRESHOLD = 0.008
+
+HIGH_CONFIDENCE = 0.70
+BASE_THRESHOLD = 0.58
 
 
 def rms_energy(segment: AudioSegment) -> float:
@@ -104,9 +109,12 @@ def main() -> int:
     )
 
     doctor_emb = get_embedding(spk_model, enroll_audio, device)
+    doctor_anchor = doctor_emb.clone()
 
     chunk_ms = 3_000  # 3 seconds
     previous_label = OTHER
+    similarity_window: deque[float] = deque(maxlen=10)
+    speaker_votes: deque[str] = deque(maxlen=3)
 
     for idx, chunk in iter_chunks(main_audio, chunk_ms):
         chunk_start = time.perf_counter()
@@ -132,21 +140,45 @@ def main() -> int:
 
         # Speaker embedding and similarity.
         chunk_emb = get_embedding(spk_model, chunk, device)
-        sim = float(F.cosine_similarity(doctor_emb, chunk_emb, dim=0).item())
+        sim = float(F.cosine_similarity(doctor_anchor, chunk_emb, dim=0).item())
 
-        if sim > 0.65:
+        if sim > 0.45:
+            similarity_window.append(sim)
+
+        if len(similarity_window) >= 2:
+            mean_sim = statistics.fmean(similarity_window)
+            std_sim = statistics.pstdev(similarity_window)
+            dynamic_threshold = mean_sim - 0.5 * std_sim
+        elif similarity_window:
+            dynamic_threshold = similarity_window[0]
+        else:
+            dynamic_threshold = BASE_THRESHOLD
+
+        effective_threshold = max(BASE_THRESHOLD, dynamic_threshold)
+
+        if sim >= HIGH_CONFIDENCE:
             label = DOCTOR
-        elif previous_label == DOCTOR and sim > 0.55:
+            doctor_anchor = 0.9 * doctor_anchor + 0.1 * chunk_emb
+            doctor_anchor = F.normalize(doctor_anchor, p=2, dim=-1)
+        elif sim >= effective_threshold:
+            label = DOCTOR
+        elif previous_label == DOCTOR and sim >= effective_threshold - 0.05:
             label = DOCTOR
         else:
             label = OTHER
+
+        speaker_votes.append(label)
+        if speaker_votes.count(DOCTOR) >= 2:
+            label = DOCTOR
 
         previous_label = label
 
         elapsed = time.perf_counter() - chunk_start
 
         print(f"\n[Chunk {idx}]")
-        print(f"Similarity: {sim:.3f} -> {label}")
+        print(f"Similarity: {sim:.3f}")
+        print(f"Dynamic Threshold: {dynamic_threshold:.3f}")
+        print(f"Speaker: {label}")
         print(f"Transcript: {text}")
         print(f"Processing time: {elapsed:.2f}s")
 
