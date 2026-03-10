@@ -1,6 +1,7 @@
 import time
 from io import BytesIO
 
+import re
 import torch
 import torch.nn.functional as F
 from faster_whisper import WhisperModel
@@ -10,6 +11,41 @@ from speechbrain.inference import EncoderClassifier
 # Update these paths if your files live elsewhere.
 AUDIO_PATH = r"..\deepu-amartya.mp3"
 DOCTOR_ENROLL_PATH = r"..\doctor-amartya.mp3"
+
+DOCTOR = "DOCTOR"
+OTHER = "OTHER"
+
+RMS_THRESHOLD = 0.008
+
+
+def rms_energy(segment: AudioSegment) -> float:
+    segment = segment.set_channels(1)
+    samples = segment.get_array_of_samples()
+    if len(samples) == 0:
+        return 0.0
+    x = torch.tensor(samples, dtype=torch.float32) / 32768.0
+    return float(torch.sqrt(torch.mean(x * x)).item())
+
+
+_FILLER_RE = re.compile(r"\b(um+|uh+|hmm+)\b", re.IGNORECASE)
+
+
+def mostly_non_ascii(text: str, ascii_ratio_threshold: float = 0.7) -> bool:
+    chars = [c for c in text if not c.isspace()]
+    if not chars:
+        return False
+    ascii_count = sum(1 for c in chars if ord(c) < 128)
+    return (ascii_count / len(chars)) < ascii_ratio_threshold
+
+
+def clean_transcript(text: str) -> str:
+    text = _FILLER_RE.sub("", text)
+    text = " ".join(text.split()).strip()
+    if len(text) < 3:
+        return ""
+    if mostly_non_ascii(text):
+        return ""
+    return text
 
 
 def audiosegment_to_tensor(segment: AudioSegment) -> torch.Tensor:
@@ -69,11 +105,14 @@ def main() -> int:
 
     doctor_emb = get_embedding(spk_model, enroll_audio, device)
 
-    chunk_ms = 5_000  # 5 seconds
-    threshold = 0.65
+    chunk_ms = 3_000  # 3 seconds
+    previous_label = OTHER
 
     for idx, chunk in iter_chunks(main_audio, chunk_ms):
         chunk_start = time.perf_counter()
+
+        if rms_energy(chunk) < RMS_THRESHOLD:
+            continue
 
         # Prepare audio for ASR (in-memory WAV).
         buf = BytesIO()
@@ -82,15 +121,27 @@ def main() -> int:
 
         segments, _info = asr_model.transcribe(
             buf,
+            language="en",
             beam_size=1,
+            temperature=0,
         )
 
-        text = "".join(seg.text for seg in segments).strip()
+        text = clean_transcript("".join(seg.text for seg in segments))
+        if not text:
+            continue
 
         # Speaker embedding and similarity.
         chunk_emb = get_embedding(spk_model, chunk, device)
         sim = float(F.cosine_similarity(doctor_emb, chunk_emb, dim=0).item())
-        label = "DOCTOR" if sim > threshold else "OTHER"
+
+        if sim > 0.65:
+            label = DOCTOR
+        elif previous_label == DOCTOR and sim > 0.55:
+            label = DOCTOR
+        else:
+            label = OTHER
+
+        previous_label = label
 
         elapsed = time.perf_counter() - chunk_start
 

@@ -30,7 +30,7 @@ def main() -> int:
         compute_type="float16",
     )
 
-    chunk_duration_ms = 5_000  # 5 seconds
+    chunk_duration_ms = 3_000  # 3 seconds
 
     for idx, chunk in iter_chunks(audio, chunk_duration_ms):
         chunk_start = time.perf_counter()
