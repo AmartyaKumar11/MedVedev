@@ -31,6 +31,8 @@ HIGH_CONFIDENCE = 0.70
 BASE_THRESHOLD = 0.58
 MIN_SIMILARITY = 0.40
 SMOOTH_MARGIN = 0.03
+BOOTSTRAP_THRESHOLD = 0.50   # first 3 chunks use this before dynamic threshold stabilizes
+SHORT_SEGMENT_MAX_SEC = 1.5  # chunks shorter than this inherit previous speaker label
 
 
 def rms_energy(segment: AudioSegment) -> float:
@@ -240,14 +242,15 @@ def main() -> int:
                 dynamic_threshold = BASE_THRESHOLD
 
             effective_threshold = max(BASE_THRESHOLD, dynamic_threshold)
+            use_threshold = BOOTSTRAP_THRESHOLD if idx < 3 else effective_threshold
 
             if sim >= HIGH_CONFIDENCE:
                 label = DOCTOR
                 doctor_anchor = 0.9 * doctor_anchor + 0.1 * chunk_emb
                 doctor_anchor = F.normalize(doctor_anchor, p=2, dim=-1)
-            elif sim >= effective_threshold:
+            elif sim >= use_threshold:
                 label = DOCTOR
-            elif previous_label == DOCTOR and sim >= effective_threshold - SMOOTH_MARGIN:
+            elif previous_label == DOCTOR and sim >= use_threshold - SMOOTH_MARGIN:
                 label = DOCTOR
             else:
                 label = DOCTOR if sim_doctor_cluster >= 0.65 else OTHER
@@ -255,6 +258,11 @@ def main() -> int:
         speaker_votes.append(label)
         if not hard_reject and speaker_votes.count(DOCTOR) >= 2:
             label = DOCTOR
+
+        # Short-segment speaker inheritance: very small segments inherit previous label.
+        chunk_duration_sec = len(chunk) / 1000.0
+        if chunk_duration_sec < SHORT_SEGMENT_MAX_SEC:
+            label = previous_label
 
         # Lightweight online clustering for stability (optional).
         cluster_id: int | None = None
