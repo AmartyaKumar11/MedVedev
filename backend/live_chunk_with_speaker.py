@@ -2,6 +2,7 @@ import time
 from collections import deque
 from io import BytesIO
 from typing import Iterator
+import json
 
 import re
 import statistics
@@ -70,6 +71,30 @@ def audiosegment_to_tensor(segment: AudioSegment) -> torch.Tensor:
     samples = segment.get_array_of_samples()
     tensor = torch.tensor(samples, dtype=torch.float32) / 32768.0
     return tensor.unsqueeze(0)  # [1, num_samples]
+
+
+def build_conversation_turns(chunks: list[dict[str, str]]) -> list[dict[str, str]]:
+    turns: list[dict[str, str]] = []
+    current_turn: dict[str, str] | None = None
+
+    for c in chunks:
+        speaker = c["speaker"]
+        text = c["text"]
+        if not text:
+            continue
+        if current_turn is None:
+            current_turn = {"speaker": speaker, "text": text}
+            continue
+        if speaker == current_turn["speaker"]:
+            current_turn["text"] += " " + text
+        else:
+            turns.append(current_turn)
+            current_turn = {"speaker": speaker, "text": text}
+
+    if current_turn:
+        turns.append(current_turn)
+
+    return turns
 
 
 def iter_speech_chunks(
@@ -192,6 +217,7 @@ def main() -> int:
     # Sliding window (3 chunks) for temporal smoothing. Each entry: (idx, label, sim, text, cluster_id, elapsed, dynamic_threshold, effective_threshold).
     label_buffer: deque[tuple[int, str, float, str, int, float, float, float]] = deque(maxlen=3)
     last_printed_idx: int | None = None  # avoid duplicate prints when flushing
+    conversation_chunks: list[dict[str, str]] = []
 
     for idx, chunk in iter_speech_chunks(main_audio, vad_model):
         chunk_start = time.perf_counter()
@@ -324,6 +350,7 @@ def main() -> int:
             print(f"Transcript: {m_text}")
             print(f"Processing time: {m_elapsed:.2f}s")
             last_printed_idx = m_idx
+            conversation_chunks.append({"speaker": out_label, "text": m_text})
             label_buffer.popleft()
 
         previous_label = label
@@ -344,9 +371,30 @@ def main() -> int:
         print(f"Speaker: {flush_label}")
         print(f"Transcript: {m_text}")
         print(f"Processing time: {m_elapsed:.2f}s")
+        conversation_chunks.append({"speaker": flush_label, "text": m_text})
 
     total_elapsed = time.perf_counter() - start_total
     print(f"\nTotal processing time: {total_elapsed:.2f}s")
+
+    # Build conversation turns and print structured transcript.
+    conversation_turns = build_conversation_turns(conversation_chunks)
+    if conversation_turns:
+        print("\n=== Conversation Transcript ===\n")
+        for turn in conversation_turns:
+            display_speaker = "DOCTOR" if turn["speaker"] == DOCTOR else "PATIENT"
+            print(f"{display_speaker}:")
+            print(turn["text"])
+            print()
+
+    # Export structured conversation to JSON.
+    normalized_turns = []
+    for turn in conversation_turns:
+        role = "doctor" if turn["speaker"] == DOCTOR else "patient"
+        normalized_turns.append({"speaker": role, "text": turn["text"]})
+
+    output_payload = {"conversation": normalized_turns}
+    with open("conversation_output.json", "w", encoding="utf-8") as f:
+        json.dump(output_payload, f, ensure_ascii=False, indent=2)
 
     return 0
 
