@@ -136,6 +136,65 @@ The system will NOT:
 
 ---
 
+## 7. Current Repo Status (Implemented So Far)
+
+This section describes what is already implemented in the repo today (spikes + mobile app), and what each artifact is used for.
+
+### Backend spike scripts (local experiments)
+
+All scripts below are **standalone** and are intentionally minimal (no FastAPI, no DB).
+
+- **`backend/spike_test.py`**: single-file transcription benchmark for **`faster-whisper` `large-v3`** on CUDA. Prints detected language, full transcript, wall time, and torch CUDA memory counters (note: `faster-whisper` uses CTranslate2, so torch memory counters may not reflect true model VRAM usage).
+- **`backend/live_chunk_test.py`**: near real-time simulation using `faster-whisper` **small** by chunking a local MP3 and transcribing chunk-by-chunk (for latency/UX experiments).
+- **`backend/live_chunk_with_speaker.py`**: end-to-end spike for:
+  - **Silero VAD** speech segmentation (`silero-vad`)
+  - **Whisper small (CUDA float16)** transcription (English forced, deterministic decode)
+  - **SpeechBrain ECAPA-TDNN** speaker embeddings (`speechbrain/spkrec-ecapa-voxceleb`)
+  - **Doctor anchoring** + adaptive thresholding + temporal smoothing + lightweight clustering
+  - **Conversation turn builder** + final filler removal + JSON export for LLM stage
+
+  Outputs:
+  - Chunk diagnostics in terminal
+  - Structured conversation JSON written to **`output/conversation_output.json`**
+- **`backend/diarization_test.py`**: basic pyannote diarization test using `pyannote.audio.Pipeline` (model download requires HF auth).
+- **`backend/aligned_diarization_transcript.py`**: offline alignment spike: Whisper segments + pyannote diarization segments aligned by maximum time overlap to produce speaker-tagged transcript.
+
+### Output artifacts (LLM handoff)
+
+- **`output/conversation_output.json`**: normalized conversation turns for the LLM stage:
+  - `speaker`: `"doctor"` or `"patient"`
+  - `text`: transcript text with **filler words removed only** (no grammar correction)
+
+### Local audio fixtures used in spikes
+
+- **`deepu-amartya.mp3`**: main consultation audio used for local testing.
+- **`doctor-amartya.mp3`**: doctor enrollment audio used for speaker anchoring.
+
+### Git hygiene
+
+- Large Torch wheels are ignored via `.gitignore` (`backend/torch*.whl`, `backend/torchvision*.whl`, `backend/torchaudio*.whl`).
+
+### Known dependency notes (Windows)
+
+- **SpeechBrain + HuggingFace Hub**: mismatched versions can raise `hf_hub_download(... use_auth_token=...)` errors. Resolve by upgrading `speechbrain` or pinning a compatible `huggingface_hub`.
+- **pyannote audio decoding**: depending on environment, `torchcodec`/FFmpeg warnings may appear. In most cases this is an environment issue rather than a pipeline logic issue.
+
+### Mobile app (React Native / Expo)
+
+The repo includes an Expo-managed React Native app at the repo root (see `package.json`, `app.json`) and the architecture doc `MOBILE_APP_ARCHITECTURE.md`.
+
+Run locally:
+
+```powershell
+cd D:\Medvedev
+npm install
+npm run android
+```
+
+By default the app runs in mock API mode (see `src/constants/config.ts`).
+
+---
+
 ## 7. Success Criteria (End of Phase 1)
 
 Doctor can:
