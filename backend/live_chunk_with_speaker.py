@@ -3,6 +3,7 @@ from collections import deque
 from io import BytesIO
 from typing import Iterator
 import json
+import os
 
 import re
 import statistics
@@ -46,6 +47,10 @@ def rms_energy(segment: AudioSegment) -> float:
 
 
 _FILLER_RE = re.compile(r"\b(um+|uh+|hmm+)\b", re.IGNORECASE)
+FILLER_REGEX = re.compile(
+    r"\b(um+|uh+|hmm+|erm+|ah+)\b",
+    re.IGNORECASE,
+)
 
 
 def mostly_non_ascii(text: str, ascii_ratio_threshold: float = 0.7) -> bool:
@@ -64,6 +69,12 @@ def clean_transcript(text: str) -> str:
     if mostly_non_ascii(text):
         return ""
     return text
+
+
+def remove_fillers(text: str) -> str:
+    text = FILLER_REGEX.sub("", text)
+    text = " ".join(text.split())
+    return text.strip()
 
 
 def audiosegment_to_tensor(segment: AudioSegment) -> torch.Tensor:
@@ -376,25 +387,41 @@ def main() -> int:
     total_elapsed = time.perf_counter() - start_total
     print(f"\nTotal processing time: {total_elapsed:.2f}s")
 
-    # Build conversation turns and print structured transcript.
+    # Build conversation turns.
     conversation_turns = build_conversation_turns(conversation_chunks)
-    if conversation_turns:
+
+    # Apply final filler removal for LLM-facing output.
+    for turn in conversation_turns:
+        turn["text"] = remove_fillers(turn["text"])
+
+    # Normalize speaker labels for API / LLM.
+    normalized_conversation: list[dict[str, str]] = []
+    for turn in conversation_turns:
+        speaker = turn["speaker"]
+        if speaker == DOCTOR:
+            norm_speaker = "doctor"
+        else:
+            norm_speaker = "patient"
+        normalized_conversation.append(
+            {"speaker": norm_speaker, "text": turn["text"]}
+        )
+
+    result = {"conversation": normalized_conversation}
+
+    # Print clean conversation view.
+    if normalized_conversation:
         print("\n=== Conversation Transcript ===\n")
-        for turn in conversation_turns:
-            display_speaker = "DOCTOR" if turn["speaker"] == DOCTOR else "PATIENT"
-            print(f"{display_speaker}:")
+        for turn in normalized_conversation:
+            display = "Doctor" if turn["speaker"] == "doctor" else "Patient"
+            print(f"{display}:")
             print(turn["text"])
             print()
 
-    # Export structured conversation to JSON.
-    normalized_turns = []
-    for turn in conversation_turns:
-        role = "doctor" if turn["speaker"] == DOCTOR else "patient"
-        normalized_turns.append({"speaker": role, "text": turn["text"]})
-
-    output_payload = {"conversation": normalized_turns}
-    with open("conversation_output.json", "w", encoding="utf-8") as f:
-        json.dump(output_payload, f, ensure_ascii=False, indent=2)
+    # Export structured conversation to JSON in output/ (overwrite each run).
+    os.makedirs("output", exist_ok=True)
+    output_path = os.path.join("output", "conversation_output.json")
+    with open(output_path, "w", encoding="utf-8") as f:
+        json.dump(result, f, indent=2, ensure_ascii=False)
 
     return 0
 
