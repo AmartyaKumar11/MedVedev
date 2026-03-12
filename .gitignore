@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Python
 __pycache__/
 *.py[cod]
@@ -57,7 +56,6 @@ backend/torchaudio-*.whl
 output/
 outputs/
 chunks/
-=======
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
@@ -99,4 +97,4 @@ yarn-error.*
 # generated native folders
 /ios
 /android
->>>>>>> origin/mobile_app
+backend/conversation_output.json
