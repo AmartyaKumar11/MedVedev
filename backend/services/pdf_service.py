@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import shutil
+from pathlib import Path
 from typing import Any
 
 from jinja2 import Template
@@ -14,26 +16,53 @@ _HTML_TEMPLATE = """<!DOCTYPE html>
 <style>
 body {
     font-family: Arial, Helvetica, sans-serif;
+    font-size: 13.6px;
     padding: 30px;
     color: #222;
     line-height: 1.45;
 }
-h1 { font-size: 22px; margin-bottom: 8px; }
+h1 { font-size: 18.7px; margin-bottom: 8px; }
 h2 {
-    font-size: 16px;
+    font-size: 13.6px;
     border-bottom: 1px solid #ccc;
     padding-bottom: 6px;
     margin-top: 22px;
 }
-h3 { font-size: 14px; margin: 12px 0 6px 0; }
+h3 { font-size: 11.9px; margin: 12px 0 6px 0; }
 .section { margin-bottom: 18px; }
 .muted { color: #666; font-style: italic; }
 ul { margin: 6px 0 6px 20px; padding: 0; }
 li { margin: 4px 0; }
 p { margin: 6px 0; }
+.report-branding {
+    margin: -30px -30px 24px -30px;
+}
+.report-head-banner {
+    width: 100%;
+    height: auto;
+    display: block;
+    vertical-align: bottom;
+}
+.physician-meta {
+    padding: 14px 30px 4px 30px;
+    font-size: 11.05px;
+    color: #222;
+    line-height: 1.4;
+}
+.physician-meta p { margin: 4px 0; }
+.physician-name { font-size: 11.9px; }
 </style>
 </head>
 <body>
+
+<header class="report-branding">
+<img class="report-head-banner" src="report-header.png" alt="BML Munjal University"/>
+<div class="physician-meta">
+<p class="physician-name"><strong>Dr. Amartya Kumar</strong></p>
+<p class="physician-phone">Phone: 5648289288</p>
+<p class="physician-address">BML Munjal University</p>
+</div>
+</header>
 
 <h1>{{ report_title }}</h1>
 
@@ -118,6 +147,27 @@ p { margin: 6px 0; }
 </html>
 """
 
+_HEADER_IMAGE_NAME = "Screenshot 2026-03-29 154516.png"
+_HEADER_COPY_NAME = "report-header.png"
+
+
+def _output_dir() -> Path:
+    return Path(__file__).resolve().parent.parent / "output"
+
+
+def _ensure_header_image_for_pdf() -> Path:
+    """Copy banner asset into output/ so WeasyPrint can resolve a simple relative src."""
+    repo_root = Path(__file__).resolve().parent.parent.parent
+    src = repo_root / "assets" / _HEADER_IMAGE_NAME
+    if not src.is_file():
+        msg = f"Report header image not found: {src}"
+        raise FileNotFoundError(msg)
+    out = _output_dir()
+    out.mkdir(parents=True, exist_ok=True)
+    dest = out / _HEADER_COPY_NAME
+    shutil.copy2(src, dest)
+    return out
+
 
 def _normalize_soap(soap_json: dict[str, Any]) -> dict[str, Any]:
     """Ensure all sections exist; tolerate missing keys, nulls, and LLM error payloads."""
@@ -167,9 +217,11 @@ def generate_pdf(soap_json: dict[str, Any]) -> bytes:
 
     Expects the same structure as ``soap_output.json`` from ``llm_service``.
     """
+    output_path = _ensure_header_image_for_pdf()
     ctx = _normalize_soap(soap_json)
     rendered_html = Template(_HTML_TEMPLATE).render(**ctx)
 
     from weasyprint import HTML
 
-    return HTML(string=rendered_html).write_pdf()
+    base_url = output_path.resolve().as_uri() + "/"
+    return HTML(string=rendered_html, base_url=base_url).write_pdf()
