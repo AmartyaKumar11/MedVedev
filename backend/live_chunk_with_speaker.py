@@ -15,6 +15,7 @@ from silero_vad import get_speech_timestamps, load_silero_vad
 from speechbrain.inference import EncoderClassifier
 
 from services.llm_service import generate_soap_note
+from services.pdf_service import generate_pdf
 
 VAD_SAMPLING_RATE = 16_000
 MIN_CHUNK_MS = 1_000   # 1 second
@@ -432,6 +433,15 @@ def main() -> int:
     soap_path = os.path.join("output", "soap_output.json")
     with open(soap_path, "w", encoding="utf-8") as f:
         json.dump(soap_output, f, indent=2, ensure_ascii=False)
+
+    try:
+        pdf_bytes = generate_pdf(soap_output)
+        report_path = os.path.join("output", "report.pdf")
+        with open(report_path, "wb") as f:
+            f.write(pdf_bytes)
+        print(f"\nWrote PDF: {report_path}")
+    except Exception as e:
+        print(f"\nPDF generation failed: {e}")
 
     return 0
 
