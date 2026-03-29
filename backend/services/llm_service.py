@@ -48,7 +48,7 @@ def resolve_llm_endpoint(api_key: str) -> tuple[str, str]:
 
 
 def _build_prompt(conversation_json: str) -> str:
-    return f"""You are a clinical documentation assistant.
+    return """You are a clinical documentation assistant.
 
 Convert the following doctor-patient conversation into a structured SOAP note.
 
@@ -56,81 +56,58 @@ STRICT RULES:
 - Do NOT hallucinate
 - Do NOT add medical advice beyond what is said
 - Only extract information explicitly present
-- If data is missing, return null
+- If data is missing, use empty arrays or omit empty subsections
 - Normalize Hinglish or informal language into proper clinical English
 - Output STRICT JSON only (no explanation, no markdown)
+- For subjective, objective, assessment, and plan: use "subsections" (see SCHEMA). Choose sub-headings dynamically based on what the encounter actually contains (e.g. "Chief complaint", "History of present illness", "Associated symptoms", "Social history", "Vitals", "Abdominal examination", "Impression", "Investigations ordered", "Follow-up"). Use as many or as few subsections as are appropriate; each subsection must have a non-empty "heading".
 
 SCHEMA:
-{{
+{
   "subjective": {
-    "chief_complaint": "",
-    "history_of_present_illness": {
-      "onset": "",
-      "duration": "",
-      "progression": "",
-      "severity": "",
-      "description": "",
-      "associated_symptoms": [],
-      "aggravating_factors": [],
-      "relieving_factors": []
-    },
-    "review_of_systems": {
-      "gastrointestinal": [],
-      "general": [],
-      "others": []
-    },
-    "past_medical_history": [],
-    "past_surgical_history": [],
-    "medication_history": [],
-    "allergies": [],
-    "family_history": [],
-    "social_history": {
-      "occupation": "",
-      "lifestyle_factors": []
-    }
+    "subsections": [
+      {
+        "heading": "Short clinical sub-heading you choose for this case",
+        "content": "One paragraph of narrative, or null if only bullets are used",
+        "bullets": ["Optional bullet points; use [] if none"]
+      }
+    ]
   },
   "objective": {
-    "exam_performed": false,
-    "vitals": {
-      "blood_pressure": null,
-      "heart_rate": null,
-      "temperature": null,
-      "respiratory_rate": null
-    },
-    "physical_exam": [],
-    "notes": ""
+    "subsections": [
+      {
+        "heading": "e.g. Vitals, Examination findings",
+        "content": null,
+        "bullets": ["Finding one", "Finding two"]
+      }
+    ]
   },
   "assessment": {
-    "primary_diagnosis": "",
-    "differential_diagnoses": [],
-    "clinical_reasoning": ""
+    "subsections": [
+      {
+        "heading": "e.g. Impression, Differential diagnoses",
+        "content": "Summary text or null",
+        "bullets": []
+      }
+    ]
   },
   "plan": {
-    "medications": [
+    "subsections": [
       {
-        "name": "",
-        "type": "",
-        "dosage": "",
-        "duration": "",
-        "purpose": ""
+        "heading": "e.g. Investigations, Medications, Patient instructions, Follow-up",
+        "content": null,
+        "bullets": ["Item one"]
       }
-    ],
-    "lifestyle_advice": [],
-    "procedures": [],
-    "investigations": [],
-    "follow_up": "",
-    "referral": ""
+    ]
   },
   "meta": {
     "language_detected": "",
     "confidence": "",
     "notes": ""
   }
-}}
+}
 
 CONVERSATION:
-{conversation_json}
-"""
+""" + conversation_json
 
 
 def _strip_markdown_fences(text: str) -> str:

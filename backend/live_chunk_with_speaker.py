@@ -24,7 +24,7 @@ MERGE_UNDER_MS = 800   # merge segment with next if shorter than this
 MERGE_SMALL_CHUNK_MS = 1_200  # merge chunk with next if shorter than this (before ASR)
 
 # Update these paths if your files live elsewhere.
-AUDIO_PATH = r"..\deepu-amartya.mp3"
+AUDIO_PATH = r"..\appendicits.mp3"
 DOCTOR_ENROLL_PATH = r"..\doctor-amartya.mp3"
 
 DOCTOR = "DOCTOR"

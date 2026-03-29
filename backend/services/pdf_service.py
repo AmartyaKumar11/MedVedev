@@ -72,74 +72,97 @@ p { margin: 6px 0; }
 
 <div class="section">
 <h2>Subjective</h2>
-<h3>Chief complaint</h3>
-<p>{{ subjective.chief_complaint | default("Not available", true) }}</p>
-
-<h3>History</h3>
-<p>{{ subjective.history | default("Not available", true) }}</p>
-
-<h3>Duration</h3>
-<p>{{ subjective.duration | default("Not available", true) }}</p>
-
-<h3>Symptoms</h3>
-{% if subjective.symptoms and subjective.symptoms|length > 0 %}
+{% if subjective.subsections and subjective.subsections|length > 0 %}
+{% for block in subjective.subsections %}
+<h3>{{ block.heading }}</h3>
+{% if block.content %}
+<p>{{ block.content }}</p>
+{% endif %}
+{% if block.bullets and block.bullets|length > 0 %}
 <ul>
-{% for s in subjective.symptoms %}
-<li>{{ s }}</li>
+{% for b in block.bullets %}
+<li>{{ b }}</li>
 {% endfor %}
 </ul>
+{% endif %}
+{% if not block.content and (not block.bullets or block.bullets|length == 0) %}
+<p class="muted">Not documented</p>
+{% endif %}
+{% endfor %}
 {% else %}
-<p class="muted">None documented</p>
+<p class="muted">No subjective data</p>
 {% endif %}
 </div>
 
 <div class="section">
 <h2>Objective</h2>
-{% if objective.observations and objective.observations|length > 0 %}
+{% if objective.subsections and objective.subsections|length > 0 %}
+{% for block in objective.subsections %}
+<h3>{{ block.heading }}</h3>
+{% if block.content %}
+<p>{{ block.content }}</p>
+{% endif %}
+{% if block.bullets and block.bullets|length > 0 %}
 <ul>
-{% for o in objective.observations %}
-<li>{{ o }}</li>
+{% for b in block.bullets %}
+<li>{{ b }}</li>
 {% endfor %}
 </ul>
+{% endif %}
+{% if not block.content and (not block.bullets or block.bullets|length == 0) %}
+<p class="muted">Not documented</p>
+{% endif %}
+{% endfor %}
 {% else %}
-<p class="muted">No physical examination data available</p>
+<p class="muted">No objective data</p>
 {% endif %}
 </div>
 
 <div class="section">
 <h2>Assessment</h2>
-<p>{{ assessment.possible_condition | default("Not specified", true) }}</p>
+{% if assessment.subsections and assessment.subsections|length > 0 %}
+{% for block in assessment.subsections %}
+<h3>{{ block.heading }}</h3>
+{% if block.content %}
+<p>{{ block.content }}</p>
+{% endif %}
+{% if block.bullets and block.bullets|length > 0 %}
+<ul>
+{% for b in block.bullets %}
+<li>{{ b }}</li>
+{% endfor %}
+</ul>
+{% endif %}
+{% if not block.content and (not block.bullets or block.bullets|length == 0) %}
+<p class="muted">Not documented</p>
+{% endif %}
+{% endfor %}
+{% else %}
+<p class="muted">No assessment data</p>
+{% endif %}
 </div>
 
 <div class="section">
 <h2>Plan</h2>
-
-<h3>Medications</h3>
-{% if plan.medications and plan.medications|length > 0 %}
-<ul>
-{% for med in plan.medications %}
-<li>
-{% if med is mapping %}
-{{ med.name or med.type or "Medication" }}{% if med.purpose %} — {{ med.purpose }}{% endif %}
-{% else %}
-{{ med }}
+{% if plan.subsections and plan.subsections|length > 0 %}
+{% for block in plan.subsections %}
+<h3>{{ block.heading }}</h3>
+{% if block.content %}
+<p>{{ block.content }}</p>
 {% endif %}
-</li>
+{% if block.bullets and block.bullets|length > 0 %}
+<ul>
+{% for b in block.bullets %}
+<li>{{ b }}</li>
 {% endfor %}
 </ul>
-{% else %}
-<p class="muted">None specified</p>
 {% endif %}
-
-<h3>Advice</h3>
-{% if plan.advice and plan.advice|length > 0 %}
-<ul>
-{% for item in plan.advice %}
-<li>{{ item }}</li>
+{% if not block.content and (not block.bullets or block.bullets|length == 0) %}
+<p class="muted">Not documented</p>
+{% endif %}
 {% endfor %}
-</ul>
 {% else %}
-<p class="muted">None specified</p>
+<p class="muted">No plan data</p>
 {% endif %}
 </div>
 
@@ -169,8 +192,124 @@ def _ensure_header_image_for_pdf() -> Path:
     return out
 
 
+def _coerce_str_list(value: Any) -> list[str]:
+    if value is None:
+        return []
+    if isinstance(value, list):
+        out: list[str] = []
+        for item in value:
+            if item is None:
+                continue
+            s = str(item).strip()
+            if s:
+                out.append(s)
+        return out
+    s = str(value).strip()
+    return [s] if s else []
+
+
+def _dedupe_preserve(items: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for x in items:
+        if x not in seen:
+            seen.add(x)
+            out.append(x)
+    return out
+
+
+def _coerce_subsections(raw: Any) -> list[dict[str, Any]]:
+    """Parse LLM `subsections` arrays into normalized blocks for the PDF template."""
+    if not isinstance(raw, list):
+        return []
+    out: list[dict[str, Any]] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        h = item.get("heading")
+        heading = str(h).strip() if h is not None else ""
+        c = item.get("content")
+        if c is None:
+            content: str | None = None
+        else:
+            cs = str(c).strip()
+            content = cs if cs else None
+        bullets = _dedupe_preserve(_coerce_str_list(item.get("bullets")))
+        if not heading:
+            if not content and not bullets:
+                continue
+            heading = "Details"
+        if not content and not bullets:
+            continue
+        out.append({"heading": heading, "content": content, "bullets": bullets})
+    return out
+
+
+def _medication_lines(medications: Any) -> list[str]:
+    if not isinstance(medications, list):
+        return []
+    lines: list[str] = []
+    for med in medications:
+        if isinstance(med, dict):
+            name = med.get("name") or med.get("type") or "Medication"
+            parts: list[str] = []
+            for key in ("dosage", "duration", "purpose"):
+                v = med.get(key)
+                if v is not None and str(v).strip():
+                    parts.append(str(v).strip())
+            line = str(name).strip()
+            if parts:
+                line += " — " + "; ".join(parts)
+            lines.append(line)
+        else:
+            s = str(med).strip()
+            if s:
+                lines.append(s)
+    return lines
+
+
+def _legacy_subjective_subsections(
+    chief: Any, history: Any, duration: Any, symptoms: list[str]
+) -> list[dict[str, Any]]:
+    blocks: list[dict[str, Any]] = []
+    if chief is not None and str(chief).strip():
+        blocks.append({"heading": "Chief complaint", "content": str(chief).strip(), "bullets": []})
+    if history is not None and str(history).strip():
+        blocks.append({"heading": "History", "content": str(history).strip(), "bullets": []})
+    if duration is not None and str(duration).strip():
+        blocks.append({"heading": "Duration", "content": str(duration).strip(), "bullets": []})
+    if symptoms:
+        blocks.append({"heading": "Symptoms", "content": None, "bullets": symptoms})
+    return blocks
+
+
+def _legacy_plan_subsections(
+    medications: Any,
+    advice: list[str],
+    investigations: list[str],
+    procedures: list[str],
+    follow_up: str | None,
+    referral: str | None,
+) -> list[dict[str, Any]]:
+    blocks: list[dict[str, Any]] = []
+    med_lines = _medication_lines(medications)
+    if med_lines:
+        blocks.append({"heading": "Medications", "content": None, "bullets": med_lines})
+    if advice:
+        blocks.append({"heading": "Advice", "content": None, "bullets": advice})
+    if investigations:
+        blocks.append({"heading": "Investigations", "content": None, "bullets": investigations})
+    if procedures:
+        blocks.append({"heading": "Procedures", "content": None, "bullets": procedures})
+    if follow_up:
+        blocks.append({"heading": "Follow-up", "content": follow_up, "bullets": []})
+    if referral:
+        blocks.append({"heading": "Referral", "content": referral, "bullets": []})
+    return blocks
+
+
 def _normalize_soap(soap_json: dict[str, Any]) -> dict[str, Any]:
-    """Ensure all sections exist; tolerate missing keys, nulls, and LLM error payloads."""
+    """Build PDF context: prefer LLM ``subsections`` (dynamic headings); else derive from legacy shapes."""
     if not isinstance(soap_json, dict):
         soap_json = {}
 
@@ -183,31 +322,139 @@ def _normalize_soap(soap_json: dict[str, Any]) -> dict[str, Any]:
     pln = soap_json.get("plan")
     pln = pln if isinstance(pln, dict) else {}
 
-    symptoms = sub.get("symptoms")
-    if not isinstance(symptoms, list):
-        symptoms = []
-    observations = obj.get("observations")
-    if not isinstance(observations, list):
-        observations = []
+    hpi = sub.get("history_of_present_illness")
+    hpi = hpi if isinstance(hpi, dict) else {}
+
+    history = sub.get("history")
+    if history is None or (isinstance(history, str) and not history.strip()):
+        bits: list[str] = []
+        desc = hpi.get("description")
+        if desc:
+            bits.append(str(desc).strip())
+        for label, key in (
+            ("Onset", "onset"),
+            ("Duration", "duration"),
+            ("Progression", "progression"),
+            ("Severity", "severity"),
+        ):
+            v = hpi.get(key)
+            if v is not None and str(v).strip():
+                bits.append(f"{label}: {v}".strip())
+        history = " ".join(bits) if bits else None
+
+    duration = sub.get("duration")
+    if duration is None or (isinstance(duration, str) and not str(duration).strip()):
+        d = hpi.get("duration")
+        duration = d if d is not None and str(d).strip() else None
+
+    symptoms = _dedupe_preserve(
+        _coerce_str_list(sub.get("symptoms"))
+        + _coerce_str_list(hpi.get("associated_symptoms"))
+    )
+    ros = sub.get("review_of_systems")
+    if isinstance(ros, dict):
+        for key in ("gastrointestinal", "general", "others"):
+            symptoms.extend(_coerce_str_list(ros.get(key)))
+    symptoms = _dedupe_preserve(symptoms)
+
+    observations = _coerce_str_list(obj.get("observations"))
+    if not observations:
+        observations = _coerce_str_list(obj.get("physical_exam"))
+
+    vitals = obj.get("vitals")
+    if isinstance(vitals, dict):
+        vparts: list[str] = []
+        for key, lab in (
+            ("blood_pressure", "BP"),
+            ("heart_rate", "HR"),
+            ("temperature", "Temp"),
+            ("respiratory_rate", "RR"),
+        ):
+            val = vitals.get(key)
+            if val is not None and str(val).strip():
+                vparts.append(f"{lab} {val}")
+        if vparts:
+            observations.insert(0, "Vitals: " + ", ".join(vparts))
+
+    notes = obj.get("notes")
+    if notes is not None and str(notes).strip():
+        observations.append(f"Notes: {str(notes).strip()}")
+
+    possible = ass.get("possible_condition")
+    if possible is None or (isinstance(possible, str) and not possible.strip()):
+        pd = ass.get("primary_diagnosis")
+        possible = pd if pd is not None and str(pd).strip() else None
+    if possible is None:
+        diff = ass.get("differential_diagnoses")
+        if isinstance(diff, list) and diff:
+            possible = "; ".join(_coerce_str_list(diff))
+
     medications = pln.get("medications")
     if not isinstance(medications, list):
         medications = []
-    advice = pln.get("advice")
-    if not isinstance(advice, list):
-        advice = []
+
+    advice = _coerce_str_list(pln.get("advice"))
+    if not advice:
+        advice = _coerce_str_list(pln.get("lifestyle_advice"))
+
+    investigations = _coerce_str_list(pln.get("investigations"))
+    procedures = _coerce_str_list(pln.get("procedures"))
+    fu = pln.get("follow_up")
+    follow_up = str(fu).strip() if fu is not None and str(fu).strip() else None
+    ref = pln.get("referral")
+    referral = str(ref).strip() if ref is not None and str(ref).strip() else None
+
+    sub_sub = _coerce_subsections(sub.get("subsections"))
+    if not sub_sub:
+        sub_sub = _legacy_subjective_subsections(
+            sub.get("chief_complaint"), history, duration, symptoms
+        )
+
+    obj_sub = _coerce_subsections(obj.get("subsections"))
+    if not obj_sub:
+        if observations:
+            obj_sub = [
+                {
+                    "heading": "Examination findings",
+                    "content": None,
+                    "bullets": observations,
+                }
+            ]
+        else:
+            obj_sub = []
+
+    ass_sub = _coerce_subsections(ass.get("subsections"))
+    if not ass_sub:
+        if possible is not None and str(possible).strip():
+            ass_sub = [
+                {"heading": "Impression", "content": str(possible).strip(), "bullets": []}
+            ]
+        else:
+            cr = ass.get("clinical_reasoning")
+            if cr is not None and str(cr).strip():
+                ass_sub = [
+                    {
+                        "heading": "Clinical reasoning",
+                        "content": str(cr).strip(),
+                        "bullets": [],
+                    }
+                ]
+            else:
+                ass_sub = []
+
+    plan_sub = _coerce_subsections(pln.get("subsections"))
+    if not plan_sub:
+        plan_sub = _legacy_plan_subsections(
+            medications, advice, investigations, procedures, follow_up, referral
+        )
 
     return {
         "report_title": "Medical Consultation Report",
         "error": soap_json.get("error"),
-        "subjective": {
-            "chief_complaint": sub.get("chief_complaint"),
-            "history": sub.get("history"),
-            "duration": sub.get("duration"),
-            "symptoms": symptoms,
-        },
-        "objective": {"observations": observations},
-        "assessment": {"possible_condition": ass.get("possible_condition")},
-        "plan": {"medications": medications, "advice": advice},
+        "subjective": {"subsections": sub_sub},
+        "objective": {"subsections": obj_sub},
+        "assessment": {"subsections": ass_sub},
+        "plan": {"subsections": plan_sub},
     }
 
 
