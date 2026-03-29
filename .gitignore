@@ -89,6 +89,7 @@ yarn-error.*
 *.pem
 
 # local env files
+.env
 .env*.local
 
 # typescript
@@ -98,3 +99,5 @@ yarn-error.*
 /ios
 /android
 backend/conversation_output.json
+
+.env*

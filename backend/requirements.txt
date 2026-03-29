@@ -1,0 +1,2 @@
+# Optional: load API keys from backend/.env
+python-dotenv>=1.0.0

@@ -14,6 +14,8 @@ from pydub import AudioSegment
 from silero_vad import get_speech_timestamps, load_silero_vad
 from speechbrain.inference import EncoderClassifier
 
+from services.llm_service import generate_soap_note
+
 VAD_SAMPLING_RATE = 16_000
 MIN_CHUNK_MS = 1_000   # 1 second
 MAX_CHUNK_MS = 8_000   # 8 seconds
@@ -408,6 +410,10 @@ def main() -> int:
 
     result = {"conversation": normalized_conversation}
 
+    soap_output = generate_soap_note(normalized_conversation)
+    print("\n=== SOAP OUTPUT ===\n")
+    print(json.dumps(soap_output, indent=2, ensure_ascii=False))
+
     # Print clean conversation view.
     if normalized_conversation:
         print("\n=== Conversation Transcript ===\n")
@@ -417,11 +423,15 @@ def main() -> int:
             print(turn["text"])
             print()
 
-    # Export structured conversation to JSON in output/ (overwrite each run).
+    # Export structured conversation and SOAP JSON in output/ (overwrite each run).
     os.makedirs("output", exist_ok=True)
     output_path = os.path.join("output", "conversation_output.json")
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
+
+    soap_path = os.path.join("output", "soap_output.json")
+    with open(soap_path, "w", encoding="utf-8") as f:
+        json.dump(soap_output, f, indent=2, ensure_ascii=False)
 
     return 0
 
