@@ -62,22 +62,70 @@ STRICT RULES:
 
 SCHEMA:
 {{
-  "subjective": {{
+  "subjective": {
     "chief_complaint": "",
-    "history": "",
-    "duration": "",
-    "symptoms": []
-  }},
-  "objective": {{
-    "observations": []
-  }},
-  "assessment": {{
-    "possible_condition": ""
-  }},
-  "plan": {{
-    "medications": [],
-    "advice": []
-  }}
+    "history_of_present_illness": {
+      "onset": "",
+      "duration": "",
+      "progression": "",
+      "severity": "",
+      "description": "",
+      "associated_symptoms": [],
+      "aggravating_factors": [],
+      "relieving_factors": []
+    },
+    "review_of_systems": {
+      "gastrointestinal": [],
+      "general": [],
+      "others": []
+    },
+    "past_medical_history": [],
+    "past_surgical_history": [],
+    "medication_history": [],
+    "allergies": [],
+    "family_history": [],
+    "social_history": {
+      "occupation": "",
+      "lifestyle_factors": []
+    }
+  },
+  "objective": {
+    "exam_performed": false,
+    "vitals": {
+      "blood_pressure": null,
+      "heart_rate": null,
+      "temperature": null,
+      "respiratory_rate": null
+    },
+    "physical_exam": [],
+    "notes": ""
+  },
+  "assessment": {
+    "primary_diagnosis": "",
+    "differential_diagnoses": [],
+    "clinical_reasoning": ""
+  },
+  "plan": {
+    "medications": [
+      {
+        "name": "",
+        "type": "",
+        "dosage": "",
+        "duration": "",
+        "purpose": ""
+      }
+    ],
+    "lifestyle_advice": [],
+    "procedures": [],
+    "investigations": [],
+    "follow_up": "",
+    "referral": ""
+  },
+  "meta": {
+    "language_detected": "",
+    "confidence": "",
+    "notes": ""
+  }
 }}
 
 CONVERSATION:
