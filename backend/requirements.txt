@@ -4,3 +4,8 @@ python-dotenv>=1.0.0
 # PDF report (SOAP JSON → HTML → PDF)
 jinja2>=3.1.0
 weasyprint>=62.0
+
+# API server
+fastapi>=0.110.0
+uvicorn>=0.30.0
+python-multipart>=0.0.9

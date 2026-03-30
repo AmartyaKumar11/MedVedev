@@ -1,9 +1,7 @@
-import time
 from collections import deque
 from io import BytesIO
 from typing import Iterator
 import json
-import os
 
 import re
 import statistics
@@ -15,7 +13,6 @@ from silero_vad import get_speech_timestamps, load_silero_vad
 from speechbrain.inference import EncoderClassifier
 
 from services.llm_service import generate_soap_note
-from services.pdf_service import generate_pdf
 
 VAD_SAMPLING_RATE = 16_000
 MIN_CHUNK_MS = 1_000   # 1 second
@@ -190,30 +187,24 @@ def get_embedding(
     return F.normalize(emb, p=2, dim=-1)
 
 
-def main() -> int:
+def process_audio(audio_path: str, doctor_enroll_path: str) -> dict:
     if not torch.cuda.is_available():
-        print("CUDA is not available. This script requires an NVIDIA GPU + CUDA.")
-        return 2
+        raise RuntimeError("CUDA is not available. This pipeline requires NVIDIA GPU + CUDA.")
 
     device = torch.device("cuda")
-    start_total = time.perf_counter()
 
     vad_model = load_silero_vad()
 
-    print(f"Loading enrollment audio from {DOCTOR_ENROLL_PATH!r}...")
-    enroll_audio = AudioSegment.from_file(DOCTOR_ENROLL_PATH)
+    enroll_audio = AudioSegment.from_file(doctor_enroll_path)
 
-    print(f"Loading main audio from {AUDIO_PATH!r}...")
-    main_audio = AudioSegment.from_file(AUDIO_PATH)
+    main_audio = AudioSegment.from_file(audio_path)
 
-    print("Loading WhisperModel 'small' on CUDA...")
     asr_model = WhisperModel(
         "small",
         device="cuda",
         compute_type="float16",
     )
 
-    print("Loading SpeechBrain ECAPA-TDNN (speechbrain/spkrec-ecapa-voxceleb)...")
     spk_model = EncoderClassifier.from_hparams(
         source="speechbrain/spkrec-ecapa-voxceleb",
         run_opts={"device": str(device)},
@@ -356,13 +347,6 @@ def main() -> int:
             else:
                 out_label = mid_label
             m_idx, _, m_sim, m_text, m_cid, m_elapsed, m_dt, _ = mid_entry
-            print(f"\n[Chunk {m_idx}]")
-            print(f"Similarity: {m_sim:.3f}")
-            print(f"Dynamic Threshold: {m_dt:.3f}")
-            print(f"Cluster ID: {m_cid}")
-            print(f"Speaker: {out_label}")
-            print(f"Transcript: {m_text}")
-            print(f"Processing time: {m_elapsed:.2f}s")
             last_printed_idx = m_idx
             conversation_chunks.append({"speaker": out_label, "text": m_text})
             label_buffer.popleft()
@@ -378,17 +362,7 @@ def main() -> int:
             flush_label = DOCTOR
         else:
             flush_label = m_label
-        print(f"\n[Chunk {m_idx}]")
-        print(f"Similarity: {m_sim:.3f}")
-        print(f"Dynamic Threshold: {m_dt:.3f}")
-        print(f"Cluster ID: {m_cid}")
-        print(f"Speaker: {flush_label}")
-        print(f"Transcript: {m_text}")
-        print(f"Processing time: {m_elapsed:.2f}s")
         conversation_chunks.append({"speaker": flush_label, "text": m_text})
-
-    total_elapsed = time.perf_counter() - start_total
-    print(f"\nTotal processing time: {total_elapsed:.2f}s")
 
     # Build conversation turns.
     conversation_turns = build_conversation_turns(conversation_chunks)
@@ -412,38 +386,18 @@ def main() -> int:
     result = {"conversation": normalized_conversation}
 
     soap_output = generate_soap_note(normalized_conversation)
-    print("\n=== SOAP OUTPUT ===\n")
-    print(json.dumps(soap_output, indent=2, ensure_ascii=False))
+    result["soap"] = soap_output
+    return result
 
-    # Print clean conversation view.
-    if normalized_conversation:
-        print("\n=== Conversation Transcript ===\n")
-        for turn in normalized_conversation:
-            display = "Doctor" if turn["speaker"] == "doctor" else "Patient"
-            print(f"{display}:")
-            print(turn["text"])
-            print()
 
-    # Export structured conversation and SOAP JSON in output/ (overwrite each run).
-    os.makedirs("output", exist_ok=True)
-    output_path = os.path.join("output", "conversation_output.json")
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(result, f, indent=2, ensure_ascii=False)
-
-    soap_path = os.path.join("output", "soap_output.json")
-    with open(soap_path, "w", encoding="utf-8") as f:
-        json.dump(soap_output, f, indent=2, ensure_ascii=False)
-
+def main() -> int:
     try:
-        pdf_bytes = generate_pdf(soap_output)
-        report_path = os.path.join("output", "report.pdf")
-        with open(report_path, "wb") as f:
-            f.write(pdf_bytes)
-        print(f"\nWrote PDF: {report_path}")
+        result = process_audio(AUDIO_PATH, DOCTOR_ENROLL_PATH)
+        print(json.dumps(result, indent=2, ensure_ascii=False))
+        return 0
     except Exception as e:
-        print(f"\nPDF generation failed: {e}")
-
-    return 0
+        print(f"Pipeline failed: {e}")
+        return 1
 
 
 if __name__ == "__main__":
