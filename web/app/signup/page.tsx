@@ -206,6 +206,13 @@ export default function SignUpPage() {
                   REQUIRED
                 </div>
               </div>
+              <div className="mt-2 text-sm text-white/55">
+                {i === 0
+                  ? "Sample 1: keep the mic closer to your mouth."
+                  : i === 1
+                    ? "Sample 2: keep the mic a little farther."
+                    : "Sample 3: keep the mic at an arm's distance."}
+              </div>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
                 <AudioRecorderCard
                   label={`Sample ${i + 1}`}

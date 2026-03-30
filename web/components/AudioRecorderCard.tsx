@@ -112,7 +112,7 @@ export function AudioRecorderCard({
         </div>
       </div>
 
-      <div className="mt-4 flex items-center gap-3">
+      <div className="mt-4 flex flex-wrap items-center gap-3">
         <Button
           type="button"
           disabled={status === "unsupported" || status === "recording"}
@@ -128,12 +128,12 @@ export function AudioRecorderCard({
         >
           Stop
         </Button>
+        <div className="flex-1" />
         <Button
           type="button"
           variant="ghost"
           disabled={!file}
           onClick={() => onFile(null)}
-          className="ml-auto"
         >
           Clear
         </Button>

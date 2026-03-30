@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import { GlassCard } from "@/components/GlassCard";
-import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 export function AudioUploadCard({
@@ -15,6 +15,8 @@ export function AudioUploadCard({
   file: File | null;
   onFile: (file: File | null) => void;
 }) {
+  const inputRef = React.useRef<HTMLInputElement | null>(null);
+
   return (
     <GlassCard className="p-5">
       <div className="flex items-center justify-between gap-3">
@@ -37,11 +39,36 @@ export function AudioUploadCard({
       </div>
 
       <div className="mt-4">
-        <Input
+        <input
+          ref={inputRef}
           type="file"
           accept="audio/*"
+          className="hidden"
           onChange={(e) => onFile(e.target.files?.[0] ?? null)}
         />
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => inputRef.current?.click()}
+          >
+            Choose audio file
+          </Button>
+          <div className="min-w-0 text-xs text-white/45">
+            <div className="truncate">
+              {file ? file.name : "No file selected"}
+            </div>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={!file}
+            onClick={() => onFile(null)}
+            className="ml-auto"
+          >
+            Clear
+          </Button>
+        </div>
       </div>
 
       {file ? (
