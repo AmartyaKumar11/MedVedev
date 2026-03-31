@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from uuid import uuid4
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from app.core.config import MAX_UPLOAD_SIZE_BYTES, TEMP_AUDIO_DIR
 from app.services.pipeline_service import run_pipeline
@@ -40,13 +40,28 @@ def _save_upload_safely(upload: UploadFile) -> Path:
 
 
 @router.post("/process")
-def process_session_audio(file: UploadFile = File(...)) -> dict:
+def process_session_audio(
+    file: UploadFile = File(...),
+    doctor_id: str = Form(...),
+    patient_name: str = Form(...),
+) -> dict:
+    if not doctor_id.strip():
+        raise HTTPException(status_code=400, detail="doctor_id is required.")
+    if not patient_name.strip():
+        raise HTTPException(status_code=400, detail="patient_name is required.")
+    if len(patient_name.strip()) > 255:
+        raise HTTPException(status_code=400, detail="patient_name is too long.")
+
     _validate_audio_upload(file)
 
     saved_path: Path | None = None
     try:
         saved_path = _save_upload_safely(file)
-        result = run_pipeline(str(saved_path), doctor_id="temp-doctor")
+        result = run_pipeline(
+            str(saved_path),
+            doctor_id=doctor_id.strip(),
+            patient_name=patient_name.strip(),
+        )
         pdf_filename = Path(result["pdf_path"]).name
         pdf_url = f"/reports/{pdf_filename}"
         return {
@@ -56,6 +71,8 @@ def process_session_audio(file: UploadFile = File(...)) -> dict:
         }
     except HTTPException:
         raise
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         print(f"Pipeline processing failed: {e}")
         raise HTTPException(status_code=500, detail="Pipeline processing failed.")

@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import OUTPUT_DIR
+from app.db.session import init_db
 from app.routers import session
 from app.services.model_registry import load_models
 
@@ -13,6 +14,7 @@ app = FastAPI(
 
 @app.on_event("startup")
 def startup_event() -> None:
+    init_db()
     load_models()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
