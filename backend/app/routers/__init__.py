@@ -1,2 +1,2 @@
-from . import session
+from . import doctor, session
 

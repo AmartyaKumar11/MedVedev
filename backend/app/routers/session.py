@@ -3,8 +3,10 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import Depends
 
 from app.core.config import MAX_UPLOAD_SIZE_BYTES, TEMP_AUDIO_DIR
+from app.core.dependencies import get_current_doctor
 from app.services.pipeline_service import run_pipeline
 
 router = APIRouter(prefix="/session", tags=["session"])
@@ -42,11 +44,9 @@ def _save_upload_safely(upload: UploadFile) -> Path:
 @router.post("/process")
 def process_session_audio(
     file: UploadFile = File(...),
-    doctor_id: str = Form(...),
     patient_name: str = Form(...),
+    doctor=Depends(get_current_doctor),
 ) -> dict:
-    if not doctor_id.strip():
-        raise HTTPException(status_code=400, detail="doctor_id is required.")
     if not patient_name.strip():
         raise HTTPException(status_code=400, detail="patient_name is required.")
     if len(patient_name.strip()) > 255:
@@ -59,7 +59,7 @@ def process_session_audio(
         saved_path = _save_upload_safely(file)
         result = run_pipeline(
             str(saved_path),
-            doctor_id=doctor_id.strip(),
+            doctor_id=str(doctor.id),
             patient_name=patient_name.strip(),
         )
         pdf_filename = Path(result["pdf_path"]).name

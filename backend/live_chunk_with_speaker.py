@@ -1,3 +1,4 @@
+import time
 from collections import deque
 from io import BytesIO
 from typing import Iterator
@@ -187,7 +188,11 @@ def get_embedding(
     return F.normalize(emb, p=2, dim=-1)
 
 
-def process_audio(audio_path: str, doctor_enroll_path: str) -> dict:
+def process_audio(
+    audio_path: str,
+    doctor_enroll_path: str | None = None,
+    doctor_embedding: torch.Tensor | None = None,
+) -> dict:
     if registry.whisper_model is None or registry.spk_model is None or registry.vad_model is None or registry.device is None:
         load_models()
     if registry.whisper_model is None or registry.spk_model is None or registry.vad_model is None or registry.device is None:
@@ -196,14 +201,18 @@ def process_audio(audio_path: str, doctor_enroll_path: str) -> dict:
     device = registry.device
     vad_model = registry.vad_model
 
-    enroll_audio = AudioSegment.from_file(doctor_enroll_path)
-
     main_audio = AudioSegment.from_file(audio_path)
 
     asr_model = registry.whisper_model
     spk_model = registry.spk_model
 
-    doctor_emb = get_embedding(spk_model, enroll_audio, device)
+    if doctor_embedding is not None:
+        doctor_emb = F.normalize(doctor_embedding.to(device), p=2, dim=-1)
+    else:
+        if not doctor_enroll_path:
+            raise ValueError("doctor_enroll_path is required when doctor_embedding is not provided.")
+        enroll_audio = AudioSegment.from_file(doctor_enroll_path)
+        doctor_emb = get_embedding(spk_model, enroll_audio, device)
     doctor_anchor = doctor_emb.clone()
     doctor_cluster_centroid = doctor_emb.clone()
     doctor_cluster_size = 1
