@@ -24,8 +24,12 @@ export default function SignInPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const { doctor } = await login({ doctorId: doctorId.trim(), password });
-      setDoctor(doctor);
+      const { access_token } = await login({
+        name: doctorId.trim(),
+        password,
+      });
+      window.localStorage.setItem("token", access_token);
+      setDoctor({ id: "authenticated", name: doctorId.trim(), age: 0 });
       router.push("/dashboard");
     } catch {
       setError("Sign in failed. Please check your Doctor ID and password.");
