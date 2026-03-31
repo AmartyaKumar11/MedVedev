@@ -3,7 +3,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.core.config import OUTPUT_DIR
 from app.db.session import init_db
-from app.routers import doctor, session
+from app.routers import doctor, patients, session
 from app.services.model_registry import load_models
 
 app = FastAPI(
@@ -21,5 +21,6 @@ def startup_event() -> None:
 
 app.include_router(session.router)
 app.include_router(doctor.router)
+app.include_router(patients.router)
 app.mount("/reports", StaticFiles(directory=str(OUTPUT_DIR)), name="reports")
 
