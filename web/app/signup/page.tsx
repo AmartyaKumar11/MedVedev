@@ -240,6 +240,7 @@ export default function SignUpPage() {
                   label={`Sample ${i + 1}`}
                   file={samples[i as SampleKey]}
                   onFile={(f) => setSample(i as SampleKey, f)}
+                  teleprompterScript={ENROLL_SCRIPT}
                 />
                 <AudioUploadCard
                   label={`Upload Sample ${i + 1}`}
