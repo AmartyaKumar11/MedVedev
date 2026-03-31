@@ -7,11 +7,11 @@ import re
 import statistics
 import torch
 import torch.nn.functional as F
-from faster_whisper import WhisperModel
 from pydub import AudioSegment
-from silero_vad import get_speech_timestamps, load_silero_vad
+from silero_vad import get_speech_timestamps
 from speechbrain.inference import EncoderClassifier
 
+from app.services.model_registry import load_models, registry
 from services.llm_service import generate_soap_note
 
 VAD_SAMPLING_RATE = 16_000
@@ -188,27 +188,20 @@ def get_embedding(
 
 
 def process_audio(audio_path: str, doctor_enroll_path: str) -> dict:
-    if not torch.cuda.is_available():
-        raise RuntimeError("CUDA is not available. This pipeline requires NVIDIA GPU + CUDA.")
+    if registry.whisper_model is None or registry.spk_model is None or registry.vad_model is None or registry.device is None:
+        load_models()
+    if registry.whisper_model is None or registry.spk_model is None or registry.vad_model is None or registry.device is None:
+        raise RuntimeError("Models are not loaded. Ensure startup model loading completed.")
 
-    device = torch.device("cuda")
-
-    vad_model = load_silero_vad()
+    device = registry.device
+    vad_model = registry.vad_model
 
     enroll_audio = AudioSegment.from_file(doctor_enroll_path)
 
     main_audio = AudioSegment.from_file(audio_path)
 
-    asr_model = WhisperModel(
-        "small",
-        device="cuda",
-        compute_type="float16",
-    )
-
-    spk_model = EncoderClassifier.from_hparams(
-        source="speechbrain/spkrec-ecapa-voxceleb",
-        run_opts={"device": str(device)},
-    )
+    asr_model = registry.whisper_model
+    spk_model = registry.spk_model
 
     doctor_emb = get_embedding(spk_model, enroll_audio, device)
     doctor_anchor = doctor_emb.clone()

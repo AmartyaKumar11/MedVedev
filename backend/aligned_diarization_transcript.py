@@ -1,11 +1,15 @@
 from pyannote.audio import Pipeline
-from faster_whisper import WhisperModel
+
+from app.services.model_registry import load_models, registry
 
 AUDIO_PATH = r"..\deepu-amartya.mp3"
 
 
 def transcribe(path: str):
-    model = WhisperModel("small", device="cuda", compute_type="float16")
+    load_models()
+    model = registry.whisper_model
+    if model is None:
+        raise RuntimeError("Whisper model is not loaded.")
     segments, _info = model.transcribe(path, beam_size=1, word_timestamps=False)
     out = []
     for seg in segments:

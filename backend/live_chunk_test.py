@@ -1,8 +1,9 @@
 import time
 from io import BytesIO
 
-from faster_whisper import WhisperModel
 from pydub import AudioSegment
+
+from app.services.model_registry import load_models, registry
 
 # Update this to point to your MP3 file if needed.
 AUDIO_PATH = r"..\deepu-amartya.mp3"
@@ -23,12 +24,10 @@ def main() -> int:
     print(f"Loading audio from {AUDIO_PATH!r}...")
     audio = AudioSegment.from_file(AUDIO_PATH)
 
-    print("Loading WhisperModel 'small' on CUDA...")
-    model = WhisperModel(
-        "small",
-        device="cuda",
-        compute_type="float16",
-    )
+    load_models()
+    model = registry.whisper_model
+    if model is None:
+        raise RuntimeError("Whisper model is not loaded.")
 
     chunk_duration_ms = 3_000  # 3 seconds
 

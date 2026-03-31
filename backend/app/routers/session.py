@@ -47,9 +47,12 @@ def process_session_audio(file: UploadFile = File(...)) -> dict:
     try:
         saved_path = _save_upload_safely(file)
         result = run_pipeline(str(saved_path), doctor_id="temp-doctor")
+        pdf_filename = Path(result["pdf_path"]).name
+        pdf_url = f"/reports/{pdf_filename}"
         return {
-            "conversation": result.get("conversation", []),
-            "soap": result.get("soap", {}),
+            "conversation": result["conversation"],
+            "soap": result["soap"],
+            "pdf_url": pdf_url,
         }
     except HTTPException:
         raise

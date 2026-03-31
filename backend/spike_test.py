@@ -1,7 +1,7 @@
 import time
 
 import torch
-from faster_whisper import WhisperModel
+from app.services.model_registry import load_models, registry
 
 # Update this if your audio file lives elsewhere.
 AUDIO_PATH = r"..\deepu-amartya.mp3"
@@ -13,19 +13,14 @@ def _is_cuda_oom(err: BaseException) -> bool:
 
 
 def main() -> int:
-    if not torch.cuda.is_available():
-        print("CUDA is not available. This script requires an NVIDIA GPU + CUDA.")
-        return 2
-
     torch.cuda.empty_cache()
     start = time.perf_counter()
 
     try:
-        model = WhisperModel(
-            "medium",
-            device="cuda",
-            compute_type="int8",
-        )
+        load_models()
+        model = registry.whisper_model
+        if model is None:
+            raise RuntimeError("Whisper model is not loaded.")
 
         segments, info = model.transcribe(
             AUDIO_PATH,
