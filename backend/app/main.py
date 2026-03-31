@@ -1,3 +1,11 @@
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None  # type: ignore[misc, assignment]
+
+if load_dotenv is not None:
+    load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 
@@ -14,9 +22,14 @@ app = FastAPI(
 
 @app.on_event("startup")
 def startup_event() -> None:
-    init_db()
+    print("Starting Medvedev backend...")
+    try:
+        init_db()
+    except Exception as e:
+        raise RuntimeError(f"Database initialization failed: {str(e)}")
     load_models()
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    print("Database connected and tables initialized.")
 
 
 app.include_router(session.router)
