@@ -11,7 +11,6 @@ import { SOAPViewer } from "@/components/SOAPViewer";
 import { Topbar } from "@/components/Topbar";
 import { TranscriptViewer } from "@/components/TranscriptViewer";
 import { Button } from "@/components/ui/button";
-import { getSOAP, getTranscript, startRecording, stopRecording } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 
 export function ConsultationClient() {
@@ -20,8 +19,6 @@ export function ConsultationClient() {
 
   const doctor = useAppStore((s) => s.doctor);
   const setActivePatientId = useAppStore((s) => s.setActivePatientId);
-  const recordingId = useAppStore((s) => s.recordingId);
-  const setRecordingId = useAppStore((s) => s.setRecordingId);
   const transcript = useAppStore((s) => s.transcript);
   const setTranscript = useAppStore((s) => s.setTranscript);
   const soap = useAppStore((s) => s.soap);
@@ -46,32 +43,18 @@ export function ConsultationClient() {
 
   async function onStart() {
     setStatus("recording");
-    const { recordingId } = await startRecording();
-    setRecordingId(recordingId);
   }
 
   async function onStop() {
-    if (!recordingId) return;
     setProcessing(true);
     setStatus("processing");
-    await stopRecording({ recordingId });
-    setRecordingId(null);
-    const { transcript } = await getTranscript({ recordingId });
-    setTranscript(transcript);
     setProcessing(false);
     setStatus("idle");
   }
 
   async function generate() {
     if (!transcript.length) return;
-    setProcessing(true);
-    setStatus("processing");
-    const rid = recordingId ?? "last";
-    const { soap } = await getSOAP({ recordingId: rid });
-    setSoap(soap);
-    setProcessing(false);
-    setStatus("idle");
-    router.push(`/report/${encodeURIComponent(rid)}`);
+    router.push(`/report/${encodeURIComponent(patientId ?? "")}`);
   }
 
   return (

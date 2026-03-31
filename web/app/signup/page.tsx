@@ -9,8 +9,7 @@ import { AudioRecorderCard } from "@/components/AudioRecorderCard";
 import { AudioUploadCard } from "@/components/AudioUploadCard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { createDoctor } from "@/lib/api";
-import { useAppStore } from "@/lib/store";
+import { API_BASE } from "@/lib/api";
 
 const ENROLL_SCRIPT = `Hello, my name is Dr. [Your Name].
 
@@ -40,7 +39,6 @@ type SampleKey = 0 | 1 | 2;
 
 export default function SignUpPage() {
   const router = useRouter();
-  const setDoctor = useAppStore((s) => s.setDoctor);
 
   const [name, setName] = React.useState("");
   const [age, setAge] = React.useState<number | "">("");
@@ -54,6 +52,7 @@ export default function SignUpPage() {
 
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [success, setSuccess] = React.useState<string | null>(null);
 
   function setSample(idx: SampleKey, file: File | null) {
     setSamples((s) => {
@@ -79,6 +78,7 @@ export default function SignUpPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setSuccess(null);
 
     if (audioCount !== 3) {
       setError("You must upload/record exactly 3 audio samples before submitting.");
@@ -91,16 +91,32 @@ export default function SignUpPage() {
 
     setSubmitting(true);
     try {
-      const { doctor } = await createDoctor({
-        name: name.trim(),
-        age,
-        password,
-        enrollmentAudios: samples.filter(Boolean) as File[],
+      const [a1, a2, a3] = samples as [File, File, File];
+      const form = new FormData();
+      form.append("name", name.trim());
+      form.append("password", password);
+      form.append("audio1", a1);
+      form.append("audio2", a2);
+      form.append("audio3", a3);
+
+      const res = await fetch(`${API_BASE}/doctor/enroll`, {
+        method: "POST",
+        body: form,
       });
-      setDoctor(doctor);
-      router.push("/dashboard");
-    } catch {
-      setError("Sign up failed. Please try again.");
+
+      if (!res.ok) {
+        const msg =
+          res.status === 400
+            ? "Enrollment failed. Please check your inputs."
+            : "Enrollment failed. Please try again.";
+        setError(msg);
+        return;
+      }
+
+      setSuccess("Enrollment successful. You can now sign in.");
+      setTimeout(() => {
+        router.push("/signin");
+      }, 800);
     } finally {
       setSubmitting(false);
     }
@@ -177,6 +193,12 @@ export default function SignUpPage() {
                 {ENROLL_SCRIPT}
               </pre>
             </div>
+
+            {success ? (
+              <div className="rounded-2xl border border-white/12 bg-white/7 px-4 py-3 text-sm text-white/75">
+                {success}
+              </div>
+            ) : null}
 
             {error ? (
               <div className="rounded-2xl border border-white/12 bg-white/7 px-4 py-3 text-sm text-white/75">
