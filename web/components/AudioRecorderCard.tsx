@@ -114,8 +114,8 @@ export function AudioRecorderCard({
     <GlassCard className="p-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-medium text-white/85">{label}</div>
-          <div className="mt-1 text-xs text-white/45">
+          <div className="text-sm font-medium text-foreground">{label}</div>
+          <div className="mt-1 text-xs text-muted-foreground">
             Record directly in the browser
           </div>
         </div>
@@ -124,10 +124,10 @@ export function AudioRecorderCard({
           className={cn(
             "text-[11px] tracking-[0.18em] rounded-full px-3 py-1 border",
             status === "recording"
-              ? "border-white/20 text-white/80 bg-white/8"
+              ? "border-border text-foreground/90 bg-card/80"
               : file
-                ? "border-white/18 text-white/70 bg-white/6"
-                : "border-white/10 text-white/40 bg-white/4",
+                ? "border-border text-foreground/80 bg-card/70"
+                : "border-border/80 text-muted-foreground bg-card/60",
           )}
         >
           {status === "unsupported"
@@ -168,11 +168,11 @@ export function AudioRecorderCard({
       </div>
 
       {file ? (
-        <div className="mt-3 text-xs text-white/55">
+        <div className="mt-3 text-xs text-muted-foreground">
           {file.name} · {Math.max(1, Math.round(file.size / 1024))} KB
         </div>
       ) : (
-        <div className="mt-3 text-xs text-white/35">
+        <div className="mt-3 text-xs text-muted-foreground">
           {status === "unsupported"
             ? "Recording not supported in this browser."
             : "No recording captured yet."}
@@ -180,16 +180,16 @@ export function AudioRecorderCard({
       )}
 
       {recordingError ? (
-        <div className="mt-3 text-xs text-white/65">{recordingError}</div>
+        <div className="mt-3 text-xs text-foreground/85">{recordingError}</div>
       ) : null}
 
       {teleprompterOpen && teleprompterScript ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/72 px-4">
-          <GlassCard className="w-full max-w-3xl border-white/15 bg-[#111111]/85 p-6">
+          <GlassCard className="w-full max-w-3xl border-[var(--glass-border-strong)] bg-[var(--glass-bg-strong)] p-6">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="text-[11px] tracking-[0.22em] text-white/45">TELEPROMPTER</div>
-                <div className="mt-1 text-sm text-white/75">
+                <div className="text-[11px] tracking-[0.22em] text-muted-foreground">TELEPROMPTER</div>
+                <div className="mt-1 text-sm text-foreground/85">
                   {label} - read naturally while recording.
                 </div>
               </div>
@@ -199,22 +199,22 @@ export function AudioRecorderCard({
             </div>
 
             <div className="mt-4">
-              <div className="mb-2 flex items-center justify-between text-xs text-white/55">
+              <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
                 <span>Progress</span>
                 <span>
                   {formatTime(seconds)} / {formatTime(targetSeconds)}
                 </span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full border border-white/10 bg-white/8">
+              <div className="h-2 w-full overflow-hidden rounded-full border border-border bg-card/80">
                 <div
-                  className="h-full bg-white/80 transition-all duration-500 ease-out"
+                  className="h-full bg-primary transition-all duration-500 ease-out"
                   style={{ width: `${progressPct}%` }}
                 />
               </div>
             </div>
 
-            <div className="mt-4 max-h-[48vh] overflow-y-auto rounded-2xl border border-white/10 bg-white/6 p-4">
-              <pre className="whitespace-pre-wrap text-sm leading-6 text-white/80">
+            <div className="mt-4 max-h-[48vh] overflow-y-auto rounded-2xl border border-border bg-card/70 p-4">
+              <pre className="whitespace-pre-wrap text-sm leading-6 text-foreground/90">
                 {teleprompterScript}
               </pre>
             </div>

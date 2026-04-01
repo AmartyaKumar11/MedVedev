@@ -60,12 +60,12 @@ export default function NewPatientPage() {
           />
 
           <GlassCard className="p-7 max-w-2xl">
-            <div className="text-[11px] tracking-[0.22em] text-white/40">
+            <div className="text-[11px] tracking-[0.22em] text-muted-foreground">
               PATIENT DETAILS
             </div>
             <form onSubmit={submit} className="mt-6 grid gap-3">
               <div className="grid gap-2">
-                <div className="text-xs tracking-[0.18em] text-white/40">
+                <div className="text-xs tracking-[0.18em] text-muted-foreground">
                   NAME
                 </div>
                 <Input
@@ -76,7 +76,7 @@ export default function NewPatientPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <div className="text-xs tracking-[0.18em] text-white/40">
+                <div className="text-xs tracking-[0.18em] text-muted-foreground">
                   AGE
                 </div>
                 <Input
@@ -90,7 +90,7 @@ export default function NewPatientPage() {
                 />
               </div>
               <div className="grid gap-2">
-                <div className="text-xs tracking-[0.18em] text-white/40">
+                <div className="text-xs tracking-[0.18em] text-muted-foreground">
                   GENDER (OPTIONAL)
                 </div>
                 <Input
@@ -102,7 +102,7 @@ export default function NewPatientPage() {
               </div>
 
               {error ? (
-                <div className="rounded-2xl border border-white/12 bg-white/7 px-4 py-3 text-sm text-white/75">
+                <div className="rounded-2xl border border-border bg-card/70 px-4 py-3 text-sm text-foreground/85">
                   {error}
                 </div>
               ) : null}

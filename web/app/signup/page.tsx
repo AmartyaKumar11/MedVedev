@@ -125,7 +125,7 @@ export default function SignUpPage() {
   return (
     <div className="mx-auto w-full max-w-6xl px-6 py-12">
       <div className="flex items-center justify-between">
-        <Link href="/" className="text-[11px] tracking-[0.26em] text-white/40">
+        <Link href="/" className="text-[11px] tracking-[0.26em] text-muted-foreground">
           MEDVEDEV V2
         </Link>
         <div className="flex items-center gap-2">
@@ -137,20 +137,20 @@ export default function SignUpPage() {
 
       <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_1.15fr]">
         <GlassCard className="p-7">
-          <div className="text-[11px] tracking-[0.22em] text-white/40">
+          <div className="text-[11px] tracking-[0.22em] text-muted-foreground">
             CREATE ACCOUNT
           </div>
-          <div className="mt-3 text-2xl font-semibold text-white/90">
+          <div className="mt-3 text-2xl font-semibold text-foreground">
             Doctor Enrollment
           </div>
-          <div className="mt-2 text-sm leading-6 text-white/58">
+          <div className="mt-2 text-sm leading-6 text-muted-foreground">
             Record three voice samples to personalize diarization and improve
             clinical accuracy.
           </div>
 
           <form onSubmit={submit} className="mt-7 grid gap-3">
             <div className="grid gap-2">
-              <div className="text-xs tracking-[0.18em] text-white/40">
+              <div className="text-xs tracking-[0.18em] text-muted-foreground">
                 DOCTOR NAME
               </div>
               <Input
@@ -161,7 +161,7 @@ export default function SignUpPage() {
               />
             </div>
             <div className="grid gap-2">
-              <div className="text-xs tracking-[0.18em] text-white/40">AGE</div>
+              <div className="text-xs tracking-[0.18em] text-muted-foreground">AGE</div>
               <Input
                 value={age}
                 onChange={(e) => {
@@ -173,7 +173,7 @@ export default function SignUpPage() {
               />
             </div>
             <div className="grid gap-2">
-              <div className="text-xs tracking-[0.18em] text-white/40">
+              <div className="text-xs tracking-[0.18em] text-muted-foreground">
                 PASSWORD
               </div>
               <Input
@@ -185,30 +185,30 @@ export default function SignUpPage() {
               />
             </div>
 
-            <div className="mt-2 rounded-2xl border border-white/10 bg-white/6 p-4">
-              <div className="text-[11px] tracking-[0.22em] text-white/45">
+            <div className="mt-2 rounded-2xl border border-border bg-card/70 p-4">
+              <div className="text-[11px] tracking-[0.22em] text-muted-foreground">
                 RECORDING SCRIPT (READ EXACTLY)
               </div>
-              <pre className="mt-3 whitespace-pre-wrap text-sm leading-6 text-white/70">
+              <pre className="mt-3 whitespace-pre-wrap text-sm leading-6 text-foreground/90">
                 {ENROLL_SCRIPT}
               </pre>
             </div>
 
             {success ? (
-              <div className="rounded-2xl border border-white/12 bg-white/7 px-4 py-3 text-sm text-white/75">
+              <div className="rounded-2xl border border-border bg-card/70 px-4 py-3 text-sm text-foreground/85">
                 {success}
               </div>
             ) : null}
 
             {error ? (
-              <div className="rounded-2xl border border-white/12 bg-white/7 px-4 py-3 text-sm text-white/75">
+              <div className="rounded-2xl border border-border bg-card/70 px-4 py-3 text-sm text-foreground/85">
                 {error}
               </div>
             ) : null}
 
             <div className="mt-2 flex items-center justify-between">
-              <div className="text-xs text-white/45">
-                Samples captured: <span className="text-white/80">{audioCount}/3</span>
+              <div className="text-xs text-muted-foreground">
+                Samples captured: <span className="text-foreground/90">{audioCount}/3</span>
               </div>
               <Button type="submit" disabled={!canSubmit}>
                 {submitting ? "Submitting..." : "Submit"}
@@ -221,14 +221,14 @@ export default function SignUpPage() {
           {[0, 1, 2].map((i) => (
             <GlassCard key={i} className="p-5">
               <div className="flex items-center justify-between">
-                <div className="text-sm font-medium text-white/85">
+                <div className="text-sm font-medium text-foreground">
                   Audio Sample {i + 1}
                 </div>
-                <div className="text-[11px] tracking-[0.18em] text-white/40">
+                <div className="text-[11px] tracking-[0.18em] text-muted-foreground">
                   REQUIRED
                 </div>
               </div>
-              <div className="mt-2 text-sm text-white/55">
+              <div className="mt-2 text-sm text-muted-foreground">
                 {i === 0
                   ? "Sample 1: keep the mic closer to your mouth."
                   : i === 1
@@ -251,8 +251,8 @@ export default function SignUpPage() {
             </GlassCard>
           ))}
 
-          <div className="text-xs text-white/40 leading-6">
-            You must provide <span className="text-white/70">exactly three</span> audio samples to continue.
+          <div className="text-xs leading-6 text-muted-foreground">
+            You must provide <span className="text-foreground/90">exactly three</span> audio samples to continue.
           </div>
         </div>
       </div>

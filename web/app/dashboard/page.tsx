@@ -9,8 +9,8 @@ export default function DashboardPage() {
       fallback={
         <div className="mx-auto w-full max-w-7xl px-6 py-8">
           <GlassCard className="p-7">
-            <div className="text-sm font-medium text-white/85">Loading…</div>
-            <div className="mt-2 text-sm text-white/55">
+            <div className="text-sm font-medium text-foreground">Loading...</div>
+            <div className="mt-2 text-sm text-muted-foreground">
               Preparing dashboard.
             </div>
           </GlassCard>

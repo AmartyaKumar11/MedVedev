@@ -83,23 +83,23 @@ export default function ReportPage() {
           />
 
           <GlassCard className="p-6">
-            <div className="text-[11px] tracking-[0.22em] text-white/40">
+            <div className="text-[11px] tracking-[0.22em] text-muted-foreground">
               PATIENT DETAILS
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-2">
-              <div className="rounded-2xl border border-white/10 bg-white/6 p-4">
-                <div className="text-xs tracking-[0.18em] text-white/45">
+              <div className="rounded-2xl border border-border bg-card/70 p-4">
+                <div className="text-xs tracking-[0.18em] text-muted-foreground">
                   NAME
                 </div>
-                <div className="mt-2 text-sm text-white/80">
+                <div className="mt-2 text-sm text-foreground/90">
                   {patient?.name ?? "—"}
                 </div>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/6 p-4">
-                <div className="text-xs tracking-[0.18em] text-white/45">
+              <div className="rounded-2xl border border-border bg-card/70 p-4">
+                <div className="text-xs tracking-[0.18em] text-muted-foreground">
                   PATIENT ID
                 </div>
-                <div className="mt-2 text-sm text-white/80">{reportId}</div>
+                <div className="mt-2 text-sm text-foreground/90">{reportId}</div>
               </div>
             </div>
           </GlassCard>
@@ -107,24 +107,24 @@ export default function ReportPage() {
           <SOAPViewer soap={soap} />
 
           <GlassCard className="p-6">
-            <div className="text-[11px] tracking-[0.22em] text-white/40">
+            <div className="text-[11px] tracking-[0.22em] text-muted-foreground">
               SESSION HISTORY
             </div>
             {loading ? (
-              <div className="mt-3 text-sm text-white/60">Loading sessions…</div>
+              <div className="mt-3 text-sm text-muted-foreground">Loading sessions…</div>
             ) : error ? (
               <div className="mt-3 text-sm text-red-400/80">{error}</div>
             ) : sessions.length === 0 ? (
-              <div className="mt-3 text-sm text-white/60">No sessions yet.</div>
+              <div className="mt-3 text-sm text-muted-foreground">No sessions yet.</div>
             ) : (
               <div className="mt-4 space-y-3">
                 {sessions.map((s) => (
                   <div
                     key={s.session_id}
-                    className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-sm"
+                    className="flex items-center justify-between rounded-2xl border border-border bg-card/70 px-4 py-3 text-sm"
                   >
                     <div className="flex flex-col">
-                      <span className="text-white/80">
+                      <span className="text-foreground/90">
                         Session on {new Date(s.created_at).toLocaleString()}
                       </span>
                     </div>
@@ -138,7 +138,7 @@ export default function ReportPage() {
                         Download PDF
                       </Button>
                     ) : (
-                      <div className="text-xs text-white/45">No PDF</div>
+                      <div className="text-xs text-muted-foreground">No PDF</div>
                     )}
                   </div>
                 ))}

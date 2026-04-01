@@ -79,36 +79,36 @@ export default function PatientHistoryPage() {
           />
 
           <GlassCard className="p-5">
-            <div className="text-sm font-medium text-white/85">Session History</div>
-            <div className="mt-1 text-xs text-white/45">
-              Patient ID <span className="text-white/70">{patientId}</span>
+            <div className="text-sm font-medium text-foreground">Session History</div>
+            <div className="mt-1 text-xs text-muted-foreground">
+              Patient ID <span className="text-foreground/85">{patientId}</span>
             </div>
 
             <div className="mt-5 grid gap-3">
               {loading ? (
-                <div className="rounded-2xl border border-white/10 bg-white/6 p-5 text-sm text-white/55">
+                <div className="rounded-2xl border border-border bg-card/70 p-5 text-sm text-muted-foreground">
                   Loading sessions…
                 </div>
               ) : error ? (
-                <div className="rounded-2xl border border-white/10 bg-white/6 p-5 text-sm text-white/55">
+                <div className="rounded-2xl border border-border bg-card/70 p-5 text-sm text-muted-foreground">
                   {error}
                 </div>
               ) : sessions.length === 0 ? (
-                <div className="rounded-2xl border border-white/10 bg-white/6 p-5 text-sm text-white/55">
+                <div className="rounded-2xl border border-border bg-card/70 p-5 text-sm text-muted-foreground">
                   No sessions yet.
                 </div>
               ) : (
                 sessions.map((s) => (
                   <div
                     key={s.session_id}
-                    className="rounded-2xl border border-white/10 bg-white/6 p-4 flex items-center justify-between gap-3"
+                    className="rounded-2xl border border-border bg-card/70 p-4 flex items-center justify-between gap-3"
                   >
                     <div>
-                      <div className="text-sm font-medium text-white/85">
+                      <div className="text-sm font-medium text-foreground">
                         {new Date(s.created_at).toLocaleString()}
                       </div>
-                      <div className="mt-1 text-xs text-white/45">
-                        Session <span className="text-white/70">{s.session_id}</span>
+                      <div className="mt-1 text-xs text-muted-foreground">
+                        Session <span className="text-foreground/85">{s.session_id}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
@@ -117,12 +117,12 @@ export default function PatientHistoryPage() {
                           href={`${API_BASE}${s.pdf_url}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-sm text-white/85 hover:text-white/95"
+                          className="text-sm text-foreground/90 hover:text-foreground"
                         >
                           View Report
                         </a>
                       ) : (
-                        <div className="text-xs text-white/40">No report</div>
+                        <div className="text-xs text-muted-foreground">No report</div>
                       )}
                     </div>
                   </div>

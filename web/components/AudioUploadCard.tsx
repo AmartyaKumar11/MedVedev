@@ -21,8 +21,8 @@ export function AudioUploadCard({
     <GlassCard className="p-5">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-sm font-medium text-white/85">{label}</div>
-          <div className="mt-1 text-xs text-white/45">
+          <div className="text-sm font-medium text-foreground">{label}</div>
+          <div className="mt-1 text-xs text-muted-foreground">
             Upload a recording (.wav, .mp3, .m4a)
           </div>
         </div>
@@ -30,8 +30,8 @@ export function AudioUploadCard({
           className={cn(
             "text-[11px] tracking-[0.18em] rounded-full px-3 py-1 border",
             file
-              ? "border-white/18 text-white/70 bg-white/6"
-              : "border-white/10 text-white/40 bg-white/4",
+              ? "border-border text-foreground/80 bg-card/70"
+              : "border-border/80 text-muted-foreground bg-card/60",
           )}
         >
           {file ? "READY" : "EMPTY"}
@@ -54,7 +54,7 @@ export function AudioUploadCard({
           >
             Choose audio file
           </Button>
-          <div className="min-w-0 text-xs text-white/45">
+          <div className="min-w-0 text-xs text-muted-foreground">
             <div className="truncate">
               {file ? file.name : "No file selected"}
             </div>
@@ -72,11 +72,11 @@ export function AudioUploadCard({
       </div>
 
       {file ? (
-        <div className="mt-3 text-xs text-white/55">
+        <div className="mt-3 text-xs text-muted-foreground">
           {file.name} · {Math.max(1, Math.round(file.size / 1024))} KB
         </div>
       ) : (
-        <div className="mt-3 text-xs text-white/35">
+        <div className="mt-3 text-xs text-muted-foreground">
           No file selected.
         </div>
       )}
