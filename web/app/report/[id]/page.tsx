@@ -25,7 +25,7 @@ export default function ReportPage() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [sessions, setSessions] = React.useState<
-    { session_id: string; created_at: string; pdf_url: string }[]
+    { session_id: string; created_at: string; pdf_url: string | null }[]
   >([]);
 
   React.useEffect(() => {
@@ -128,14 +128,18 @@ export default function ReportPage() {
                         Session on {new Date(s.created_at).toLocaleString()}
                       </span>
                     </div>
-                    <Button
-                      variant="outline"
-                      onClick={() =>
-                        window.open(`${API_BASE}${s.pdf_url}`, "_blank", "noopener,noreferrer")
-                      }
-                    >
-                      Download PDF
-                    </Button>
+                    {s.pdf_url ? (
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          window.open(`${API_BASE}${s.pdf_url}`, "_blank", "noopener,noreferrer")
+                        }
+                      >
+                        Download PDF
+                      </Button>
+                    ) : (
+                      <div className="text-xs text-white/45">No PDF</div>
+                    )}
                   </div>
                 ))}
               </div>

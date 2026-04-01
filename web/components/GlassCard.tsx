@@ -14,10 +14,10 @@ export function GlassCard({
       className={cn(
         [
           "rounded-2xl",
-          "border border-white/10",
-          "bg-white/6",
+          "border border-[var(--glass-border)]",
+          "bg-[var(--glass-bg)]",
           "backdrop-blur-xl",
-          "shadow-[0_24px_70px_rgba(0,0,0,0.55)]",
+          "shadow-[var(--shadow-soft)]",
         ].join(" "),
         className,
       )}

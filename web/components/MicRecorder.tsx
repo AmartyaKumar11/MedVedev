@@ -66,10 +66,10 @@ export function MicRecorder({
     <GlassCard className="p-7">
       <div className="flex items-center justify-between">
         <div>
-          <div className="text-xs tracking-[0.18em] text-white/40">
+          <div className="text-xs tracking-[0.18em] text-muted-foreground">
             CONSULTATION
           </div>
-          <div className="mt-1 text-lg font-semibold text-white/90">
+          <div className="mt-1 text-lg font-semibold text-foreground">
             Live Capture
           </div>
         </div>
@@ -77,10 +77,10 @@ export function MicRecorder({
           className={cn(
             "text-[11px] tracking-[0.18em] rounded-full px-3 py-1 border",
             processing
-              ? "border-white/16 text-white/55 bg-white/6"
+              ? "border-border text-muted-foreground bg-card/70"
               : recording
-                ? "border-white/20 text-white/80 bg-white/8"
-                : "border-white/10 text-white/45 bg-white/4",
+                ? "border-border text-foreground/90 bg-card/80"
+                : "border-border/80 text-muted-foreground bg-card/60",
           )}
         >
           {processing ? "PROCESSING" : recording ? `REC ${fmt(seconds)}` : "IDLE"}
@@ -92,7 +92,7 @@ export function MicRecorder({
           <div
             className={cn(
               "absolute inset-0 rounded-full blur-2xl",
-              recording ? "bg-white/10" : "bg-white/6",
+              recording ? "bg-foreground/10" : "bg-muted/70",
             )}
           />
           <button
@@ -102,7 +102,7 @@ export function MicRecorder({
             disabled={processing}
             className={cn(
               "relative h-24 w-24 rounded-full",
-              "border border-white/14 bg-white/8 backdrop-blur-xl",
+              "border border-border bg-card/80 backdrop-blur-xl",
               "shadow-[0_28px_90px_rgba(0,0,0,0.62)]",
               "transition-transform duration-150",
               "active:scale-[0.98]",
@@ -110,7 +110,7 @@ export function MicRecorder({
               processing ? "opacity-60 cursor-not-allowed" : "",
             )}
           >
-            <div className="mx-auto h-10 w-10 rounded-xl border border-white/14 bg-white/10" />
+            <div className="mx-auto h-10 w-10 rounded-xl border border-border bg-foreground/10" />
           </button>
         </div>
       </div>
@@ -141,7 +141,7 @@ export function MicRecorder({
             Cancel
           </Button>
         ) : null}
-        <div className="ml-auto text-xs text-white/40">
+        <div className="ml-auto text-xs text-muted-foreground">
           Subtle motion. No bright accents.
         </div>
       </div>

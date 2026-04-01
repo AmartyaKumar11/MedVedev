@@ -13,12 +13,12 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         className={cn(
           [
             "h-11 w-full rounded-2xl px-4",
-            "bg-white/6 text-white/90 placeholder:text-white/28",
-            "border border-white/10",
+            "bg-card/70 text-foreground placeholder:text-muted-foreground",
+            "border border-input",
             "backdrop-blur",
             "transition-colors duration-150",
-            "hover:border-white/14",
-            "focus-visible:outline-none focus-visible:border-white/18 focus-visible:ring-2 focus-visible:ring-white/14",
+            "hover:border-border",
+            "focus-visible:outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30",
           ].join(" "),
           className,
         )}

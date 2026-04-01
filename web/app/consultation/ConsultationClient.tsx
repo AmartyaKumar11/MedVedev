@@ -210,10 +210,10 @@ export function ConsultationClient() {
 
           {!patientId && !patientNameParam ? (
             <GlassCard className="p-7">
-              <div className="text-sm font-medium text-white/85">
+              <div className="text-sm font-medium text-foreground">
                 No patient selected
               </div>
-              <div className="mt-2 text-sm text-white/50">
+              <div className="mt-2 text-sm text-muted-foreground">
                 Go back to the dashboard and start a consultation from a patient.
               </div>
               <div className="mt-5">
@@ -233,10 +233,10 @@ export function ConsultationClient() {
 
               {status === "processing" ? (
                 <GlassCard className="p-6">
-                  <div className="text-sm font-medium text-white/85">
+                  <div className="text-sm font-medium text-foreground">
                     Processing…
                   </div>
-                  <div className="mt-2 text-sm text-white/55">
+                  <div className="mt-2 text-sm text-muted-foreground">
                     Generating transcript with speaker labels.
                   </div>
                 </GlassCard>
@@ -244,7 +244,7 @@ export function ConsultationClient() {
 
               {error ? (
                 <GlassCard className="p-6">
-                  <div className="text-sm text-white/75">{error}</div>
+                  <div className="text-sm text-foreground/85">{error}</div>
                 </GlassCard>
               ) : null}
 
@@ -256,12 +256,12 @@ export function ConsultationClient() {
               {pdfHref ? (
                 <GlassCard className="p-6">
                   <div className="flex items-center justify-between gap-3 text-sm">
-                    <span className="text-white/75">Report ready.</span>
+                    <span className="text-foreground/85">Report ready.</span>
                     <a
                       href={pdfHref}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-white/85 hover:text-white/95"
+                      className="text-foreground/90 hover:text-foreground"
                     >
                       Download PDF
                     </a>

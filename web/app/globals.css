@@ -1,28 +1,79 @@
 @import "tailwindcss";
 
 :root {
-  /* Strict palette */
-  --bg-0: #000000;
-  --bg-1: #0f0f0f;
-  --bg-2: #111111;
-  --bg-3: #1a1a1a;
+  /* Nature (light) theme tokens */
+  --background: 88 33% 97%;
+  --foreground: 145 22% 16%;
+  --card: 0 0% 100%;
+  --card-foreground: 145 22% 16%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 145 22% 16%;
+  --primary: 145 40% 28%;
+  --primary-foreground: 86 32% 96%;
+  --secondary: 95 24% 91%;
+  --secondary-foreground: 145 22% 22%;
+  --muted: 95 20% 90%;
+  --muted-foreground: 145 12% 40%;
+  --accent: 145 36% 34%;
+  --accent-foreground: 86 32% 96%;
+  --border: 145 16% 82%;
+  --input: 145 16% 82%;
+  --ring: 145 32% 38%;
+  --radius: 1rem;
 
-  --foreground: rgba(255, 255, 255, 0.92);
-  --muted: rgba(255, 255, 255, 0.62);
-
-  /* Glass tokens */
-  --glass: rgba(17, 17, 17, 0.62);
-  --glass-strong: rgba(26, 26, 26, 0.72);
-  --glass-border: rgba(255, 255, 255, 0.10);
-  --glass-border-strong: rgba(255, 255, 255, 0.14);
-  --shadow-soft: 0 24px 70px rgba(0, 0, 0, 0.55);
-
+  --glass-bg: hsla(0 0% 100% / 0.72);
+  --glass-bg-strong: hsla(0 0% 100% / 0.84);
+  --glass-border: hsla(145 16% 68% / 0.36);
+  --glass-border-strong: hsla(145 20% 58% / 0.46);
+  --shadow-soft: 0 24px 70px hsla(145 22% 16% / 0.12);
   --radius-2xl: 1rem;
 }
 
+.dark {
+  /* Existing glass dark style mapped to semantic tokens */
+  --background: 0 0% 0%;
+  --foreground: 0 0% 92%;
+  --card: 0 0% 7%;
+  --card-foreground: 0 0% 92%;
+  --popover: 0 0% 10%;
+  --popover-foreground: 0 0% 92%;
+  --primary: 0 0% 96%;
+  --primary-foreground: 0 0% 8%;
+  --secondary: 0 0% 13%;
+  --secondary-foreground: 0 0% 90%;
+  --muted: 0 0% 14%;
+  --muted-foreground: 0 0% 64%;
+  --accent: 0 0% 96%;
+  --accent-foreground: 0 0% 8%;
+  --border: 0 0% 100% / 0.12;
+  --input: 0 0% 100% / 0.12;
+  --ring: 0 0% 100% / 0.24;
+
+  --glass-bg: hsla(0 0% 7% / 0.62);
+  --glass-bg-strong: hsla(0 0% 10% / 0.72);
+  --glass-border: hsla(0 0% 100% / 0.10);
+  --glass-border-strong: hsla(0 0% 100% / 0.14);
+  --shadow-soft: 0 24px 70px hsla(0 0% 0% / 0.55);
+}
+
 @theme inline {
-  --color-background: var(--bg-0);
-  --color-foreground: var(--foreground);
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -32,8 +83,8 @@
 }
 
 body {
-  background: var(--bg-0);
-  color: var(--foreground);
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
 html,
@@ -41,18 +92,17 @@ body {
   height: 100%;
 }
 
-/* Subtle grain for “premium SaaS” depth (no gradients, no color) */
 body:before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
-  opacity: 0.06;
+  opacity: 0.04;
   mix-blend-mode: overlay;
 }
 
 ::selection {
-  background: rgba(255, 255, 255, 0.16);
-  color: rgba(255, 255, 255, 0.96);
+  background: hsl(var(--primary) / 0.26);
+  color: hsl(var(--primary-foreground));
 }

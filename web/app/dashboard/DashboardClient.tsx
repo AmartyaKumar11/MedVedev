@@ -80,9 +80,9 @@ export function DashboardClient() {
                   : "Dashboard"
               }
               right={
-                <div className="text-xs text-white/45">
+                <div className="text-xs text-muted-foreground">
                   Doctor ID{" "}
-                  <span className="text-white/75">{doctor?.id ?? "—"}</span>
+                  <span className="text-foreground/85">{doctor?.id ?? "—"}</span>
                 </div>
               }
             />
@@ -90,10 +90,10 @@ export function DashboardClient() {
             <GlassCard className="p-5">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <div className="text-sm font-medium text-white/85">
+                  <div className="text-sm font-medium text-foreground">
                     Patients
                   </div>
-                  <div className="mt-1 text-xs text-white/45">
+                  <div className="mt-1 text-xs text-muted-foreground">
                     Search and start a consultation.
                   </div>
                 </div>
@@ -112,15 +112,15 @@ export function DashboardClient() {
 
               <div className="mt-5 grid gap-3">
                 {loading ? (
-                  <div className="rounded-2xl border border-white/10 bg-white/6 p-5 text-sm text-white/55">
+                  <div className="rounded-2xl border border-border bg-card/70 p-5 text-sm text-muted-foreground">
                     Loading patients…
                   </div>
                 ) : apiError ? (
-                  <div className="rounded-2xl border border-white/10 bg-white/6 p-5 text-sm text-white/55">
+                  <div className="rounded-2xl border border-border bg-card/70 p-5 text-sm text-muted-foreground">
                     {apiError}
                   </div>
                 ) : filtered.length === 0 ? (
-                  <div className="rounded-2xl border border-white/10 bg-white/6 p-5 text-sm text-white/55">
+                  <div className="rounded-2xl border border-border bg-card/70 p-5 text-sm text-muted-foreground">
                     No patients found.
                   </div>
                 ) : (
@@ -168,10 +168,10 @@ export function DashboardClient() {
 
             {tab !== "dashboard" ? (
               <GlassCard className="p-5">
-                <div className="text-sm font-medium text-white/85">
+                <div className="text-sm font-medium text-foreground">
                   {tab === "patients" ? "Patients" : "Sessions"}
                 </div>
-                <div className="mt-2 text-sm text-white/50">
+                <div className="mt-2 text-sm text-muted-foreground">
                   This section is UI-only in the mock build.
                 </div>
               </GlassCard>

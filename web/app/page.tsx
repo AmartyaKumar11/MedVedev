@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { GlassCard } from "@/components/GlassCard";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
@@ -8,10 +9,11 @@ export default function Home() {
     <div className="flex-1">
       <div className="mx-auto w-full max-w-6xl px-6 py-16 sm:py-20">
         <div className="flex items-center justify-between">
-          <div className="text-[11px] tracking-[0.26em] text-white/40">
+          <div className="text-[11px] tracking-[0.26em] text-muted-foreground">
             MEDVEDEV V2
           </div>
           <div className="flex items-center gap-2">
+            <ThemeToggle />
             <Link href="/signin">
               <Button variant="ghost">Sign In</Button>
             </Link>
@@ -23,13 +25,13 @@ export default function Home() {
 
         <div className="mt-16 grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-12">
           <div>
-            <div className="text-[11px] tracking-[0.22em] text-white/40">
+            <div className="text-[11px] tracking-[0.22em] text-muted-foreground">
               CLINICAL CONVERSATION INTELLIGENCE
             </div>
-            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-white/92 sm:text-5xl">
+            <h1 className="mt-4 text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
               MEDVEDEV V2
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-7 text-white/62">
+            <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground">
               Speaker-aware transcription and clinical summarization, designed
               for calm, clean workflows—ready for backend integration when you
               are.
@@ -61,7 +63,7 @@ export default function Home() {
               ].map((f) => (
                 <div
                   key={f}
-                  className="rounded-2xl border border-white/10 bg-white/6 px-4 py-3 text-xs text-white/70 backdrop-blur-xl"
+                  className="rounded-2xl border border-border bg-card/70 px-4 py-3 text-xs text-foreground/85 backdrop-blur-xl"
                 >
                   {f}
                 </div>
@@ -70,7 +72,7 @@ export default function Home() {
           </div>
 
           <GlassCard className="p-7">
-            <div className="text-[11px] tracking-[0.22em] text-white/40">
+            <div className="text-[11px] tracking-[0.22em] text-muted-foreground">
               FEATURES
             </div>
             <div className="mt-4 grid gap-3">
@@ -94,12 +96,12 @@ export default function Home() {
               ].map((x) => (
                 <div
                   key={x.title}
-                  className="rounded-2xl border border-white/10 bg-white/6 p-4"
+                  className="rounded-2xl border border-border bg-card/70 p-4"
                 >
-                  <div className="text-sm font-medium text-white/85">
+                  <div className="text-sm font-medium text-foreground">
                     {x.title}
                   </div>
-                  <div className="mt-1 text-xs leading-5 text-white/50">
+                  <div className="mt-1 text-xs leading-5 text-muted-foreground">
                     {x.desc}
                   </div>
                 </div>
@@ -108,8 +110,8 @@ export default function Home() {
           </GlassCard>
         </div>
 
-        <div className="mt-16 border-t border-white/8 pt-8">
-          <div className="flex flex-col justify-between gap-3 text-xs text-white/40 sm:flex-row">
+        <div className="mt-16 border-t border-border/70 pt-8">
+          <div className="flex flex-col justify-between gap-3 text-xs text-muted-foreground sm:flex-row">
             <div>© {new Date().getFullYear()} MEDVEDEV V2</div>
             <div>Pure dark UI · Glass panels · Mock data only</div>
           </div>

@@ -22,10 +22,10 @@ export function Sidebar() {
   return (
     <GlassCard className="h-full p-4 flex flex-col">
       <div className="px-2 py-2">
-        <div className="text-[11px] tracking-[0.24em] text-white/40">
+        <div className="text-[11px] tracking-[0.24em] text-muted-foreground">
           MEDVEDEV V2
         </div>
-        <div className="mt-1 text-sm text-white/80">
+        <div className="mt-1 text-sm text-foreground/85">
           Clinical Conversation Intelligence
         </div>
       </div>
@@ -40,8 +40,8 @@ export function Sidebar() {
               className={cn(
                 "rounded-2xl px-3 py-2 text-sm transition-colors",
                 active
-                  ? "bg-white/10 text-white/90 border border-white/12"
-                  : "text-white/60 hover:text-white/85 hover:bg-white/6 border border-transparent",
+                  ? "bg-muted text-foreground border border-border"
+                  : "text-muted-foreground hover:text-foreground hover:bg-muted/70 border border-transparent",
               )}
             >
               {item.label}
