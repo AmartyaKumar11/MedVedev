@@ -1,7 +1,6 @@
 "use client";
 
 import { GlassCard } from "@/components/GlassCard";
-import { cn } from "@/lib/utils";
 
 export function Topbar({
   title,
@@ -11,7 +10,7 @@ export function Topbar({
   right?: React.ReactNode;
 }) {
   return (
-    <GlassCard className={cn("px-5 py-4 flex items-center justify-between")}>
+    <GlassCard className="h-fit px-5 py-3 flex items-center justify-between">
       <div>
         <div className="text-xs tracking-[0.18em] text-white/40">
           DASHBOARD

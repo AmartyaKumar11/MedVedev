@@ -31,8 +31,15 @@ export default function SignInPage() {
       window.localStorage.setItem("token", access_token);
       setDoctor({ id: "authenticated", name: doctorId.trim(), age: 0 });
       router.push("/dashboard");
-    } catch {
-      setError("Sign in failed. Please check your Doctor ID and password.");
+    } catch (e) {
+      const failedFetch =
+        e instanceof TypeError &&
+        (String(e.message).includes("fetch") || String(e.message).includes("Load failed"));
+      setError(
+        failedFetch
+          ? "Cannot reach the API. Start the backend on http://127.0.0.1:8000 and refresh. Ignore unrelated sw.js errors from browser extensions or old site data."
+          : "Sign in failed. Use the same doctor name and password you used at enrollment.",
+      );
     } finally {
       setSubmitting(false);
     }
@@ -64,12 +71,12 @@ export default function SignInPage() {
           <form onSubmit={submit} className="mt-7 grid gap-3">
             <div className="grid gap-2">
               <div className="text-xs tracking-[0.18em] text-white/40">
-                DOCTOR ID
+                DOCTOR NAME
               </div>
               <Input
                 value={doctorId}
                 onChange={(e) => setDoctorId(e.target.value)}
-                placeholder="dr_…"
+                placeholder="Same name as enrollment"
                 autoComplete="username"
               />
             </div>

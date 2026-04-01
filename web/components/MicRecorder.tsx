@@ -15,10 +15,12 @@ function fmt(sec: number) {
 export function MicRecorder({
   onStart,
   onStop,
+  onCancel,
   processing,
 }: {
   onStart: () => void;
   onStop: () => void;
+  onCancel?: () => void;
   processing?: boolean;
 }) {
   const [recording, setRecording] = React.useState(false);
@@ -48,6 +50,16 @@ export function MicRecorder({
     if (tRef.current) window.clearInterval(tRef.current);
     tRef.current = null;
     onStop();
+  }
+
+  function cancel() {
+    if (processing) return;
+    if (!recording) return;
+    setRecording(false);
+    setSeconds(0);
+    if (tRef.current) window.clearInterval(tRef.current);
+    tRef.current = null;
+    onCancel?.();
   }
 
   return (
@@ -119,6 +131,16 @@ export function MicRecorder({
         >
           Stop Recording
         </Button>
+        {onCancel ? (
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={cancel}
+            disabled={!recording || !!processing}
+          >
+            Cancel
+          </Button>
+        ) : null}
         <div className="ml-auto text-xs text-white/40">
           Subtle motion. No bright accents.
         </div>

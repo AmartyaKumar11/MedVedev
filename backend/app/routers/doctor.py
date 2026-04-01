@@ -3,6 +3,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from sqlalchemy import func
 from passlib.hash import bcrypt as passlib_bcrypt
 from passlib.hash import pbkdf2_sha256
 from pydub import AudioSegment
@@ -60,7 +61,7 @@ def enroll_doctor(
     audio2: UploadFile = File(...),
     audio3: UploadFile = File(...),
 ) -> dict:
-    name_clean = name.strip()
+    name_clean = " ".join(name.strip().split())
     password_clean = password.strip()
     if not name_clean:
         raise HTTPException(status_code=400, detail="name is required.")
@@ -129,13 +130,18 @@ def doctor_login(
     name: str = Form(...),
     password: str = Form(...),
 ) -> dict:
-    name_clean = name.strip()
+    # Single spaces, trim ends — login must not fail on "amartya kumar" vs "Amartya Kumar".
+    name_clean = " ".join(name.strip().split())
     password_clean = password.strip()
     if not name_clean or not password_clean:
         raise HTTPException(status_code=400, detail="name and password are required.")
 
     with SessionLocal() as db:
-        doctor = db.query(Doctor).filter(Doctor.name == name_clean).first()
+        doctor = (
+            db.query(Doctor)
+            .filter(func.lower(Doctor.name) == name_clean.lower())
+            .first()
+        )
         if doctor is None:
             raise HTTPException(status_code=401, detail="Invalid credentials.")
 

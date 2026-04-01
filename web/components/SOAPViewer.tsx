@@ -14,7 +14,39 @@ function Section({ title, text }: { title: string; text: string }) {
   );
 }
 
+function toDisplayText(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value == null) return "";
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => toDisplayText(item))
+      .filter((s) => s.trim().length > 0)
+      .join("\n");
+  }
+  if (typeof value === "object") {
+    const obj = value as Record<string, unknown>;
+    if ("text" in obj && typeof obj.text === "string") return obj.text;
+    if ("subsections" in obj && Array.isArray(obj.subsections)) {
+      return obj.subsections
+        .map((item) => toDisplayText(item))
+        .filter((s) => s.trim().length > 0)
+        .join("\n");
+    }
+    try {
+      return JSON.stringify(value, null, 2);
+    } catch {
+      return String(value);
+    }
+  }
+  return String(value);
+}
+
 export function SOAPViewer({ soap }: { soap: SoapNote | null }) {
+  const subjective = toDisplayText((soap as any)?.subjective);
+  const objective = toDisplayText((soap as any)?.objective);
+  const assessment = toDisplayText((soap as any)?.assessment);
+  const plan = toDisplayText((soap as any)?.plan);
+
   return (
     <GlassCard className="p-5">
       <div className="flex items-center justify-between">
@@ -30,10 +62,10 @@ export function SOAPViewer({ soap }: { soap: SoapNote | null }) {
           </div>
         ) : (
           <>
-            <Section title="Subjective" text={soap.subjective} />
-            <Section title="Objective" text={soap.objective} />
-            <Section title="Assessment" text={soap.assessment} />
-            <Section title="Plan" text={soap.plan} />
+            <Section title="Subjective" text={subjective} />
+            <Section title="Objective" text={objective} />
+            <Section title="Assessment" text={assessment} />
+            <Section title="Plan" text={plan} />
           </>
         )}
       </div>
