@@ -51,13 +51,6 @@ def run_pipeline(audio_path: str, doctor_id: str, patient_name: str) -> Dict:
 
     result = process_audio(audio_path, doctor_embedding=doctor_anchor)
 
-    pdf_bytes = generate_pdf(result["soap"])
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    pdf_filename = f"{uuid4().hex}.pdf"
-    pdf_path = OUTPUT_DIR / pdf_filename
-    with open(pdf_path, "wb") as f:
-        f.write(pdf_bytes)
-
     with SessionLocal() as db:
         try:
             patient = (
@@ -73,6 +66,29 @@ def run_pipeline(audio_path: str, doctor_id: str, patient_name: str) -> Dict:
             session_row = SessionModel(doctor_id=doctor_uuid, patient_id=patient.id)
             db.add(session_row)
             db.flush()
+
+            pdf_bytes = generate_pdf(
+                {
+                    "conversation": result["conversation"],
+                    "soap": result["soap"],
+                    "patient_name": patient.name,
+                    "patient_age": getattr(patient, "age", None),
+                    "patient_gender": getattr(patient, "gender", None),
+                    "patient_id": str(patient.id),
+                    "mpid": str(patient.id),
+                    "consultation_date": session_row.created_at.strftime("%d-%m-%Y, %I:%M %p")
+                    if session_row.created_at is not None
+                    else None,
+                    # Doctor info from the authenticated session
+                    "doctor_name": doctor.name,
+                    "doctor_quals": getattr(doctor, "qualifications", ""),
+                }
+            )
+            OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+            pdf_filename = f"{uuid4().hex}.pdf"
+            pdf_path = OUTPUT_DIR / pdf_filename
+            with open(pdf_path, "wb") as f:
+                f.write(pdf_bytes)
 
             report_row = Report(
                 session_id=session_row.id,

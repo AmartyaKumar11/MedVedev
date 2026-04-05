@@ -1,169 +1,183 @@
-"""SOAP JSON → HTML → PDF (clinical report)."""
+"""Dynamic clinical report HTML -> PDF."""
 
 from __future__ import annotations
 
 import shutil
+import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from jinja2 import Template
 
-# Embedded template (no separate file). Matches SOAP shape from llm_service / soap_output.json.
 _HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
 body {
     font-family: Arial, Helvetica, sans-serif;
-    font-size: 13.6px;
-    padding: 30px;
+    font-size: 12.5px;
+    padding: 28px 36px 36px 36px;
     color: #222;
-    line-height: 1.45;
+    line-height: 1.5;
 }
-h1 { font-size: 18.7px; margin-bottom: 8px; }
-h2 {
-    font-size: 13.6px;
-    border-bottom: 1px solid #ccc;
-    padding-bottom: 6px;
-    margin-top: 22px;
+
+/* ── Header ── */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 10px;
+    border-bottom: 2.5px solid #c65a9b;
+    margin-bottom: 10px;
 }
-h3 { font-size: 11.9px; margin: 12px 0 6px 0; }
-.section { margin-bottom: 18px; }
-.muted { color: #666; font-style: italic; }
-ul { margin: 6px 0 6px 20px; padding: 0; }
-li { margin: 4px 0; }
-p { margin: 6px 0; }
-.report-branding {
-    margin: -30px -30px 24px -30px;
+.doctor-name {
+    color: #c65a9b;
+    font-size: 26px;
+    font-style: italic;
+    font-family: "Brush Script MT", "Segoe Script", cursive;
+    line-height: 1.15;
+    margin-bottom: 3px;
 }
-.report-head-banner {
+.doctor-quals {
+    color: #c65a9b;
+    font-size: 11.5px;
+    font-weight: 700;
+    margin-top: 3px;
+}
+.doctor-contact {
+    color: #c65a9b;
+    font-size: 11.5px;
+    font-weight: 700;
+    margin-top: 2px;
+}
+.brand-area {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+}
+.brand-logo {
+    font-size: 20px;
+    font-weight: 700;
+    color: #8b4582;
+    letter-spacing: -0.5px;
+}
+.brand-c {
+    color: #c65a9b;
+    font-size: 26px;
+    font-weight: 900;
+}
+
+/* ── Patient Info Grid ── */
+.info-table {
     width: 100%;
-    height: auto;
-    display: block;
-    vertical-align: bottom;
+    border-collapse: collapse;
+    margin: 8px 0 0 0;
+    font-size: 12px;
 }
-.physician-meta {
-    padding: 14px 30px 4px 30px;
-    font-size: 11.05px;
+.info-table td {
+    padding: 3px 6px 3px 0;
+    vertical-align: top;
+}
+.info-label {
+    font-weight: 700;
+    width: 130px;
+    color: #111;
+}
+.info-value {
+    width: 250px;
+    color: #333;
+}
+
+/* ── Vitals Table ── */
+.vitals-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 14px 0;
+    font-size: 12px;
+}
+.vitals-table td {
+    border: 1px solid #666;
+    padding: 5px 10px;
+}
+.vitals-label {
+    font-weight: 700;
+    background: #fafafa;
+    width: 105px;
+}
+
+/* ── Section Blocks ── */
+.section {
+    margin-top: 14px;
+}
+.section-title {
+    font-weight: 700;
+    font-size: 12.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-bottom: 5px;
+}
+.section-body {
+    font-size: 12.5px;
+    white-space: pre-wrap;
+    line-height: 1.65;
     color: #222;
-    line-height: 1.4;
 }
-.physician-meta p { margin: 4px 0; }
-.physician-name { font-size: 11.9px; }
 </style>
 </head>
 <body>
 
-<header class="report-branding">
-<img class="report-head-banner" src="report-header.png" alt="BML Munjal University"/>
-<div class="physician-meta">
-<p class="physician-name"><strong>Dr. Amartya Kumar</strong></p>
-<p class="physician-phone">Phone: 5648289288</p>
-<p class="physician-address">BML Munjal University</p>
+<div class="header">
+  <div>
+    <div class="doctor-name">{{ doctor_name }}</div>
+    {% if doctor_quals %}<div class="doctor-quals">{{ doctor_quals }}</div>{% endif %}
+  </div>
 </div>
-</header>
 
-<h1>{{ report_title }}</h1>
+<table class="info-table">
+  <tr>
+    <td class="info-label">Name</td><td class="info-value">{{ patient_name }}</td>
+    <td class="info-label">Consultation date</td><td class="info-value">{{ consultation_date }}</td>
+  </tr>
+  <tr>
+    <td class="info-label">Age / Gender</td><td class="info-value">{{ patient_age_gender }}</td>
+    <td class="info-label"></td><td class="info-value"></td>
+  </tr>
+  <tr>
+    <td class="info-label">MPID</td><td class="info-value">{{ mpid }}</td>
+    <td class="info-label"></td><td class="info-value"></td>
+  </tr>
+</table>
 
-{% if error %}
-<p class="muted"><b>Note:</b> {{ error }}</p>
-{% endif %}
+<table class="vitals-table">
+  <tr>
+    <td class="vitals-label">Weight</td><td>{{ weight }}</td>
+    <td class="vitals-label">Pulse Rate</td><td>{{ pulse_rate }}</td>
+    <td class="vitals-label">B.P.</td><td>{{ bp }}</td>
+  </tr>
+</table>
 
 <div class="section">
-<h2>Subjective</h2>
-{% if subjective.subsections and subjective.subsections|length > 0 %}
-{% for block in subjective.subsections %}
-<h3>{{ block.heading }}</h3>
-{% if block.content %}
-<p>{{ block.content }}</p>
-{% endif %}
-{% if block.bullets and block.bullets|length > 0 %}
-<ul>
-{% for b in block.bullets %}
-<li>{{ b }}</li>
-{% endfor %}
-</ul>
-{% endif %}
-{% if not block.content and (not block.bullets or block.bullets|length == 0) %}
-<p class="muted">Not documented</p>
-{% endif %}
-{% endfor %}
-{% else %}
-<p class="muted">No subjective data</p>
-{% endif %}
+  <div class="section-title">Notes</div>
+  <div class="section-body">{{ notes }}</div>
 </div>
 
 <div class="section">
-<h2>Objective</h2>
-{% if objective.subsections and objective.subsections|length > 0 %}
-{% for block in objective.subsections %}
-<h3>{{ block.heading }}</h3>
-{% if block.content %}
-<p>{{ block.content }}</p>
-{% endif %}
-{% if block.bullets and block.bullets|length > 0 %}
-<ul>
-{% for b in block.bullets %}
-<li>{{ b }}</li>
-{% endfor %}
-</ul>
-{% endif %}
-{% if not block.content and (not block.bullets or block.bullets|length == 0) %}
-<p class="muted">Not documented</p>
-{% endif %}
-{% endfor %}
-{% else %}
-<p class="muted">No objective data</p>
-{% endif %}
+  <div class="section-title">Treatment</div>
+  <div class="section-body">{{ treatment }}</div>
 </div>
 
 <div class="section">
-<h2>Assessment</h2>
-{% if assessment.subsections and assessment.subsections|length > 0 %}
-{% for block in assessment.subsections %}
-<h3>{{ block.heading }}</h3>
-{% if block.content %}
-<p>{{ block.content }}</p>
-{% endif %}
-{% if block.bullets and block.bullets|length > 0 %}
-<ul>
-{% for b in block.bullets %}
-<li>{{ b }}</li>
-{% endfor %}
-</ul>
-{% endif %}
-{% if not block.content and (not block.bullets or block.bullets|length == 0) %}
-<p class="muted">Not documented</p>
-{% endif %}
-{% endfor %}
-{% else %}
-<p class="muted">No assessment data</p>
-{% endif %}
+  <div class="section-title">Investigations</div>
+  <div class="section-body">{{ investigations }}</div>
 </div>
 
 <div class="section">
-<h2>Plan</h2>
-{% if plan.subsections and plan.subsections|length > 0 %}
-{% for block in plan.subsections %}
-<h3>{{ block.heading }}</h3>
-{% if block.content %}
-<p>{{ block.content }}</p>
-{% endif %}
-{% if block.bullets and block.bullets|length > 0 %}
-<ul>
-{% for b in block.bullets %}
-<li>{{ b }}</li>
-{% endfor %}
-</ul>
-{% endif %}
-{% if not block.content and (not block.bullets or block.bullets|length == 0) %}
-<p class="muted">Not documented</p>
-{% endif %}
-{% endfor %}
-{% else %}
-<p class="muted">No plan data</p>
-{% endif %}
+  <div class="section-title">Follow Up</div>
+  <div class="section-body">{{ follow_up }}</div>
 </div>
 
 </body>
@@ -308,164 +322,262 @@ def _legacy_plan_subsections(
     return blocks
 
 
-def _normalize_soap(soap_json: dict[str, Any]) -> dict[str, Any]:
-    """Build PDF context: prefer LLM ``subsections`` (dynamic headings); else derive from legacy shapes."""
-    if not isinstance(soap_json, dict):
-        soap_json = {}
-
-    sub = soap_json.get("subjective")
-    sub = sub if isinstance(sub, dict) else {}
-    obj = soap_json.get("objective")
-    obj = obj if isinstance(obj, dict) else {}
-    ass = soap_json.get("assessment")
-    ass = ass if isinstance(ass, dict) else {}
-    pln = soap_json.get("plan")
-    pln = pln if isinstance(pln, dict) else {}
-
-    hpi = sub.get("history_of_present_illness")
-    hpi = hpi if isinstance(hpi, dict) else {}
-
-    history = sub.get("history")
-    if history is None or (isinstance(history, str) and not history.strip()):
-        bits: list[str] = []
-        desc = hpi.get("description")
-        if desc:
-            bits.append(str(desc).strip())
-        for label, key in (
-            ("Onset", "onset"),
-            ("Duration", "duration"),
-            ("Progression", "progression"),
-            ("Severity", "severity"),
-        ):
-            v = hpi.get(key)
+def _get_text_from_soap(soap_json: dict[str, Any], section: str) -> str:
+    raw = soap_json.get(section)
+    if isinstance(raw, str):
+        return raw.strip()
+    if isinstance(raw, dict):
+        parts: list[str] = []
+        subs = raw.get("subsections")
+        if isinstance(subs, list):
+            for s in subs:
+                if not isinstance(s, dict):
+                    continue
+                h = str(s.get("heading", "")).strip()
+                c = str(s.get("content", "")).strip()
+                b = _coerce_str_list(s.get("bullets"))
+                if h:
+                    parts.append(h)
+                if c:
+                    parts.append(c)
+                if b:
+                    parts.extend([f"- {x}" for x in b])
+        for key in ("notes", "summary", "chief_complaint", "history", "possible_condition", "follow_up"):
+            v = raw.get(key)
             if v is not None and str(v).strip():
-                bits.append(f"{label}: {v}".strip())
-        history = " ".join(bits) if bits else None
+                parts.append(str(v).strip())
+        return "\n".join(_dedupe_preserve(parts)).strip()
+    return ""
 
-    duration = sub.get("duration")
-    if duration is None or (isinstance(duration, str) and not str(duration).strip()):
-        d = hpi.get("duration")
-        duration = d if d is not None and str(d).strip() else None
 
-    symptoms = _dedupe_preserve(
-        _coerce_str_list(sub.get("symptoms"))
-        + _coerce_str_list(hpi.get("associated_symptoms"))
-    )
-    ros = sub.get("review_of_systems")
-    if isinstance(ros, dict):
-        for key in ("gastrointestinal", "general", "others"):
-            symptoms.extend(_coerce_str_list(ros.get(key)))
-    symptoms = _dedupe_preserve(symptoms)
+def _flatten_notes_text(soap_json: dict[str, Any]) -> str:
+    """Build the Notes block: subjective content (no heading labels) +
+    any lab values from objective + assessment impression."""
+    parts: list[str] = []
 
-    observations = _coerce_str_list(obj.get("observations"))
-    if not observations:
-        observations = _coerce_str_list(obj.get("physical_exam"))
+    # Subjective — content + bullets without printing heading labels
+    subj = soap_json.get("subjective")
+    if isinstance(subj, dict):
+        for sub in _coerce_subsections(subj.get("subsections") or []):
+            c = sub.get("content") or ""
+            if c:
+                parts.append(c)
+            for b in sub.get("bullets", []):
+                parts.append(b)
 
-    vitals = obj.get("vitals")
-    if isinstance(vitals, dict):
-        vparts: list[str] = []
-        for key, lab in (
-            ("blood_pressure", "BP"),
-            ("heart_rate", "HR"),
-            ("temperature", "Temp"),
-            ("respiratory_rate", "RR"),
-        ):
-            val = vitals.get(key)
-            if val is not None and str(val).strip():
-                vparts.append(f"{lab} {val}")
-        if vparts:
-            observations.insert(0, "Vitals: " + ", ".join(vparts))
+    # Objective — only Lab Values bullets go into Notes
+    obj = soap_json.get("objective")
+    if isinstance(obj, dict):
+        for sub in _coerce_subsections(obj.get("subsections") or []):
+            h = sub["heading"].lower()
+            if any(k in h for k in ("lab", "result", "blood test", "test result")):
+                for b in sub.get("bullets", []):
+                    parts.append(b)
 
-    notes = obj.get("notes")
-    if notes is not None and str(notes).strip():
-        observations.append(f"Notes: {str(notes).strip()}")
+    # Assessment — impression goes into Notes
+    assessment = soap_json.get("assessment")
+    if isinstance(assessment, dict):
+        for sub in _coerce_subsections(assessment.get("subsections") or []):
+            h = sub["heading"].lower()
+            if "impression" in h or "diagnos" in h:
+                c = sub.get("content") or ""
+                if c:
+                    parts.append(c)
+                for b in sub.get("bullets", []):
+                    parts.append(b)
 
-    possible = ass.get("possible_condition")
-    if possible is None or (isinstance(possible, str) and not possible.strip()):
-        pd = ass.get("primary_diagnosis")
-        possible = pd if pd is not None and str(pd).strip() else None
-    if possible is None:
-        diff = ass.get("differential_diagnoses")
-        if isinstance(diff, list) and diff:
-            possible = "; ".join(_coerce_str_list(diff))
+    return "\n".join(_dedupe_preserve([p for p in parts if p.strip()])).strip()
 
-    medications = pln.get("medications")
-    if not isinstance(medications, list):
-        medications = []
 
-    advice = _coerce_str_list(pln.get("advice"))
-    if not advice:
-        advice = _coerce_str_list(pln.get("lifestyle_advice"))
+def _extract_plan_subsections(plan: Any) -> dict[str, str]:
+    """Separate plan subsections into treatment (medications + advice),
+    investigations, and follow-up text based on heading keywords."""
+    MEDICATION_KEYS = frozenset({"medications", "medication", "drugs", "prescriptions", "rx"})
+    ADVICE_KEYS = frozenset({"advice", "instructions", "patient instructions",
+                             "recommendations", "lifestyle", "lifestyle advice"})
+    INVESTIGATION_KEYS = frozenset({"investigations", "investigation", "tests", "labs",
+                                    "diagnostics", "workup", "investigations ordered"})
+    FOLLOWUP_KEYS = frozenset({"follow-up", "follow up", "followup", "review",
+                               "next visit", "follow up instruction"})
 
-    investigations = _coerce_str_list(pln.get("investigations"))
-    procedures = _coerce_str_list(pln.get("procedures"))
-    fu = pln.get("follow_up")
-    follow_up = str(fu).strip() if fu is not None and str(fu).strip() else None
-    ref = pln.get("referral")
-    referral = str(ref).strip() if ref is not None and str(ref).strip() else None
+    treatment_lines: list[str] = []
+    investigation_lines: list[str] = []
+    follow_up_lines: list[str] = []
 
-    sub_sub = _coerce_subsections(sub.get("subsections"))
-    if not sub_sub:
-        sub_sub = _legacy_subjective_subsections(
-            sub.get("chief_complaint"), history, duration, symptoms
-        )
+    if not isinstance(plan, dict):
+        return {"treatment": "", "investigations": "", "follow_up": ""}
 
-    obj_sub = _coerce_subsections(obj.get("subsections"))
-    if not obj_sub:
-        if observations:
-            obj_sub = [
-                {
-                    "heading": "Examination findings",
-                    "content": None,
-                    "bullets": observations,
-                }
-            ]
+    for sub in _coerce_subsections(plan.get("subsections") or []):
+        heading_lc = sub["heading"].lower()
+        content = sub.get("content") or ""
+        bullets = sub.get("bullets", [])
+
+        is_medication = heading_lc in MEDICATION_KEYS or any(
+            k in heading_lc for k in ("medic", "drug", "prescri"))
+        is_advice = heading_lc in ADVICE_KEYS or any(
+            k in heading_lc for k in ("advice", "instruct", "recommend", "lifestyle"))
+        is_investigation = heading_lc in INVESTIGATION_KEYS or any(
+            k in heading_lc for k in ("invest", "test", "lab", "diagnos", "workup"))
+        is_followup = heading_lc in FOLLOWUP_KEYS or any(
+            k in heading_lc for k in ("follow", "review", "next visit"))
+
+        if is_followup:
+            if content:
+                follow_up_lines.append(content)
+            follow_up_lines.extend(bullets)
+        elif is_investigation:
+            if content:
+                investigation_lines.append(content)
+            investigation_lines.extend(bullets)
+        elif is_medication or is_advice:
+            if content:
+                treatment_lines.append(content)
+            treatment_lines.extend(bullets)
         else:
-            obj_sub = []
-
-    ass_sub = _coerce_subsections(ass.get("subsections"))
-    if not ass_sub:
-        if possible is not None and str(possible).strip():
-            ass_sub = [
-                {"heading": "Impression", "content": str(possible).strip(), "bullets": []}
-            ]
-        else:
-            cr = ass.get("clinical_reasoning")
-            if cr is not None and str(cr).strip():
-                ass_sub = [
-                    {
-                        "heading": "Clinical reasoning",
-                        "content": str(cr).strip(),
-                        "bullets": [],
-                    }
-                ]
-            else:
-                ass_sub = []
-
-    plan_sub = _coerce_subsections(pln.get("subsections"))
-    if not plan_sub:
-        plan_sub = _legacy_plan_subsections(
-            medications, advice, investigations, procedures, follow_up, referral
-        )
+            # Unknown heading — fallback to treatment
+            if content:
+                treatment_lines.append(content)
+            treatment_lines.extend(bullets)
 
     return {
-        "report_title": "Medical Consultation Report",
-        "error": soap_json.get("error"),
-        "subjective": {"subsections": sub_sub},
-        "objective": {"subsections": obj_sub},
-        "assessment": {"subsections": ass_sub},
-        "plan": {"subsections": plan_sub},
+        "treatment": "\n".join(ln for ln in treatment_lines if ln.strip()).strip(),
+        "investigations": "\n".join(ln for ln in investigation_lines if ln.strip()).strip(),
+        "follow_up": "\n".join(ln for ln in follow_up_lines if ln.strip()).strip(),
     }
 
 
-def generate_pdf(soap_json: dict[str, Any]) -> bytes:
+_BP_RE = re.compile(r"\b(\d{2,3}\s*/\s*\d{2,3})\b")
+_PULSE_RE = re.compile(r"\b(?:pulse|hr|heart rate)[:\s-]*(\d{2,3})\b", re.IGNORECASE)
+_WEIGHT_RE = re.compile(r"\b(?:weight|wt)[:\s-]*(\d{2,3}(?:\.\d+)?)\s*(kg)?\b", re.IGNORECASE)
+
+
+def _extract_vitals(text: str, soap_obj: dict[str, Any]) -> dict[str, str]:
+    bp = "—"
+    pulse = "—"
+    weight = "—"
+
+    # Regex extraction from raw conversation text
+    m = _BP_RE.search(text)
+    if m:
+        bp = f"{m.group(1).replace(' ', '')} mm/hg"
+    m = _PULSE_RE.search(text)
+    if m:
+        pulse = f"{m.group(1)} bpm"
+    m = _WEIGHT_RE.search(text)
+    if m:
+        weight = f"{m.group(1)} kg"
+
+    obj = soap_obj.get("objective")
+    if isinstance(obj, dict):
+        # Legacy dict format
+        vitals = obj.get("vitals")
+        if isinstance(vitals, dict):
+            bp_val = vitals.get("blood_pressure")
+            hr_val = vitals.get("heart_rate")
+            wt_val = vitals.get("weight")
+            if bp_val and str(bp_val).strip():
+                bp = f"{str(bp_val).strip()} mm/hg"
+            if hr_val and str(hr_val).strip():
+                pulse = f"{str(hr_val).strip()} bpm"
+            if wt_val and str(wt_val).strip():
+                weight = f"{str(wt_val).strip()} kg"
+        # New subsections format: parse "Vitals" subsection bullets
+        for sub in _coerce_subsections(obj.get("subsections") or []):
+            if "vital" not in sub["heading"].lower():
+                continue
+            for bullet in sub.get("bullets", []):
+                bl = bullet.lower()
+                if any(k in bl for k in ("bp:", "blood pressure:", "b.p.:")):
+                    m2 = _BP_RE.search(bullet)
+                    if m2:
+                        bp = f"{m2.group(1).replace(' ', '')} mm/hg"
+                elif any(k in bl for k in ("pulse:", "hr:", "heart rate:")):
+                    m2 = _PULSE_RE.search(bullet)
+                    if m2:
+                        pulse = f"{m2.group(1)} bpm"
+                elif any(k in bl for k in ("weight:", "wt:")):
+                    m2 = _WEIGHT_RE.search(bullet)
+                    if m2:
+                        weight = f"{m2.group(1)} kg"
+
+    return {"bp": bp, "pulse_rate": pulse, "weight": weight}
+
+
+def _normalize_report_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    conversation = payload.get("conversation") or []
+    soap_json = payload.get("soap") or {}
+    text_blob = "\n".join(
+        str(t.get("text", "")).strip()
+        for t in conversation
+        if isinstance(t, dict)
+    )
+    vitals = _extract_vitals(text_blob, soap_json if isinstance(soap_json, dict) else {})
+
+    # Notes = subjective (complaints, past history, lab values) + assessment impression
+    notes = _flatten_notes_text(soap_json if isinstance(soap_json, dict) else {})
+
+    # Plan: split into treatment (medications+advice), investigations, follow-up
+    plan = soap_json.get("plan") if isinstance(soap_json, dict) else None
+    plan_parts = _extract_plan_subsections(plan)
+    treatment = plan_parts["treatment"]
+    investigations = plan_parts["investigations"]
+    follow_up = plan_parts["follow_up"]
+
+    # Fallback follow-up
+    if not follow_up and isinstance(plan, dict):
+        fu = plan.get("follow_up")
+        if fu and str(fu).strip():
+            follow_up = str(fu).strip()
+    if not follow_up:
+        follow_up = "Follow up after 1 week for evaluation"
+
+    patient_name = str(payload.get("patient_name") or "—")
+    patient_age = payload.get("patient_age")
+    patient_gender = payload.get("patient_gender")
+    age_gender = " / ".join(
+        [x for x in [
+            str(patient_age).strip() if patient_age is not None else "",
+            str(patient_gender).strip() if patient_gender is not None else "",
+        ] if x]
+    ) or "—"
+
+    consultation_date = payload.get("consultation_date")
+    if not consultation_date:
+        consultation_date = datetime.now().strftime("%d-%m-%Y, %I:%M %p")
+
+    # Doctor info — comes from the logged-in doctor passed in the payload
+    raw_doctor_name = payload.get("doctor_name") or ""
+    doctor_name = str(raw_doctor_name).strip() or "—"
+    # Auto-prefix "Dr." if not already present
+    if doctor_name != "—" and not doctor_name.lower().startswith("dr"):
+        doctor_name = f"Dr. {doctor_name}"
+    doctor_quals = str(payload.get("doctor_quals") or "").strip()
+
+    return {
+        "patient_name": patient_name,
+        "patient_age_gender": age_gender,
+        "consultation_date": str(consultation_date),
+        "mpid": str(payload.get("mpid") or payload.get("patient_id") or "—"),
+        "weight": vitals["weight"],
+        "pulse_rate": vitals["pulse_rate"],
+        "bp": vitals["bp"],
+        "notes": notes or "—",
+        "treatment": treatment or "—",
+        "investigations": investigations or "—",
+        "follow_up": follow_up or "—",
+        "doctor_name": doctor_name,
+        "doctor_quals": doctor_quals,
+    }
+
+
+def generate_pdf(report_payload: dict[str, Any]) -> bytes:
     """
     Render SOAP JSON to a PDF document (bytes).
 
-    Expects the same structure as ``soap_output.json`` from ``llm_service``.
+    Expects report payload with soap + conversation + patient/session metadata.
     """
     output_path = _ensure_header_image_for_pdf()
-    ctx = _normalize_soap(soap_json)
+    ctx = _normalize_report_payload(report_payload)
     rendered_html = Template(_HTML_TEMPLATE).render(**ctx)
 
     from weasyprint import HTML

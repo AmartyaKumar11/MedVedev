@@ -54,38 +54,74 @@ Convert the following doctor-patient conversation into a structured SOAP note.
 
 STRICT RULES:
 - Do NOT hallucinate
-- Do NOT add medical advice beyond what is said
-- Only extract information explicitly present
-- If data is missing, use empty arrays or omit empty subsections
+- Do NOT add medical advice beyond what is explicitly said
+- Only extract information present in the conversation
+- If data is missing, use empty arrays [] or null
 - Normalize Hinglish or informal language into proper clinical English
-- Output STRICT JSON only (no explanation, no markdown)
-- For subjective, objective, assessment, and plan: use "subsections" (see SCHEMA). Choose sub-headings dynamically based on what the encounter actually contains (e.g. "Chief complaint", "History of present illness", "Associated symptoms", "Social history", "Vitals", "Abdominal examination", "Impression", "Investigations ordered", "Follow-up"). Use as many or as few subsections as are appropriate; each subsection must have a non-empty "heading".
+- Output STRICT JSON only (no explanation, no markdown fences)
+- Use "subsections" arrays for all four SOAP sections as defined in the SCHEMA
+
+SECTION GUIDANCE:
+
+SUBJECTIVE — Extract these sub-headings (only if content exists):
+  - "Chief Complaint": the patient's main presenting issue (1-2 sentences)
+  - "Past Medical History": known prior conditions, prior diagnoses, EXISTING ongoing medications
+    e.g. "Known case of hypothyroidism on 50mcg Thyronorm since March 2023"
+  - "History of Present Illness": onset, duration, progression, severity, location
+  - "Associated Symptoms": other symptoms mentioned
+  - "Social History": smoking, alcohol, occupation, family history
+
+OBJECTIVE — Extract these sub-headings (only if data is present):
+  - "Vitals": each as its own bullet — "Weight: X kg", "Pulse: X bpm", "BP: XXX/XX mmHg"
+  - "Lab Values": any test results mentioned — "TSH: 4.6", "Vit D: Low", "HbA1c: 7.2%"
+  - "Physical Examination": clinical exam findings (tenderness, guarding, etc.)
+
+ASSESSMENT:
+  - "Impression": primary diagnosis or working diagnosis (1-2 sentences)
+  - "Differential Diagnoses": alternative diagnoses if discussed (as bullets)
+
+PLAN — CRITICAL — Use these exact sub-headings:
+  - "Medications": EACH bullet = one complete prescription line in FULL clinical format:
+    "[FORM] [DRUG NAME] [STRENGTH] [ROUTE] [FREQUENCY] [DURATION] [SPECIAL INSTRUCTIONS]"
+    Examples:
+      "TAB THYRONORM 50MCG ORALLY ONCE DAILY EMPTY STOMACH BEFORE BREAKFAST - TO CONTINUE"
+      "SYP ARACHITOL 5ML ORALLY ONCE A WEEK X 3 MONTHS"
+      "CAP DOXYCYCLINE 100MG ORALLY TWICE DAILY X 7 DAYS WITH FOOD"
+      "TAB PAN 40MG ORALLY SOS IN CASE OF ACIDITY"
+    Extract EVERY medication mentioned including continuing ones.
+  - "Advice": non-medication patient instructions as individual bullets
+    e.g. "NO ALCOHOLIC DRINK FOR 48 HRS", "INCREASE WATER INTAKE", "REST"
+  - "Investigations": SPECIFIC test/investigation names as individual bullets
+    e.g. "USG Abdomen and Pelvis", "Complete Blood Count (CBC)", "TSH", "Vitamin D levels"
+    Do NOT use vague terms like "further tests" — name each investigation specifically.
+  - "Follow-up": single follow-up instruction as the content field
+    e.g. "Follow up after 1 week for evaluation"
 
 SCHEMA:
 {
   "subjective": {
     "subsections": [
       {
-        "heading": "Short clinical sub-heading you choose for this case",
-        "content": "One paragraph of narrative, or null if only bullets are used",
-        "bullets": ["Optional bullet points; use [] if none"]
+        "heading": "Sub-heading chosen from guidance above",
+        "content": "Narrative paragraph or null if only bullets used",
+        "bullets": ["Bullet point; use [] if none"]
       }
     ]
   },
   "objective": {
     "subsections": [
       {
-        "heading": "e.g. Vitals, Examination findings",
+        "heading": "Vitals",
         "content": null,
-        "bullets": ["Finding one", "Finding two"]
+        "bullets": ["Weight: X kg", "Pulse: X bpm", "BP: XXX/XX mmHg"]
       }
     ]
   },
   "assessment": {
     "subsections": [
       {
-        "heading": "e.g. Impression, Differential diagnoses",
-        "content": "Summary text or null",
+        "heading": "Impression",
+        "content": "Diagnosis or working impression",
         "bullets": []
       }
     ]
@@ -93,9 +129,24 @@ SCHEMA:
   "plan": {
     "subsections": [
       {
-        "heading": "e.g. Investigations, Medications, Patient instructions, Follow-up",
+        "heading": "Medications",
         "content": null,
-        "bullets": ["Item one"]
+        "bullets": ["FULL PRESCRIPTION LINE per drug"]
+      },
+      {
+        "heading": "Advice",
+        "content": null,
+        "bullets": ["Patient instruction"]
+      },
+      {
+        "heading": "Investigations",
+        "content": null,
+        "bullets": ["Specific investigation name"]
+      },
+      {
+        "heading": "Follow-up",
+        "content": "Follow up instruction text",
+        "bullets": []
       }
     ]
   },
