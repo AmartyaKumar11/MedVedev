@@ -48,63 +48,107 @@ def resolve_llm_endpoint(api_key: str) -> tuple[str, str]:
 
 
 def _build_prompt(conversation_json: str) -> str:
-    return """You are a clinical documentation assistant.
+    return """You are a clinical documentation assistant generating a doctor's prescription record.
 
 Convert the following doctor-patient conversation into a structured SOAP note.
 
 STRICT RULES:
 - Do NOT hallucinate
-- Do NOT add medical advice beyond what is explicitly said
+- Do NOT add information beyond what is explicitly said in the conversation
 - Only extract information present in the conversation
 - If data is missing, use empty arrays [] or null
 - Normalize Hinglish or informal language into proper clinical English
 - Output STRICT JSON only (no explanation, no markdown fences)
 - Use "subsections" arrays for all four SOAP sections as defined in the SCHEMA
 
-SECTION GUIDANCE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WRITING STYLE — CRITICAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-SUBJECTIVE — Extract these sub-headings (only if content exists):
-  - "Chief Complaint": the patient's main presenting issue (1-2 sentences)
-  - "Past Medical History": known prior conditions, prior diagnoses, EXISTING ongoing medications
-    e.g. "Known case of hypothyroidism on 50mcg Thyronorm since March 2023"
-  - "History of Present Illness": onset, duration, progression, severity, location
-  - "Associated Symptoms": other symptoms mentioned
-  - "Social History": smoking, alcohol, occupation, family history
+SUBJECTIVE and ASSESSMENT must be written in UPPERCASE CLINICAL SHORTHAND.
+This is how real doctors write prescription notes — not like a medical essay.
 
-OBJECTIVE — Extract these sub-headings (only if data is present):
+BANNED phrases (never use these):
+  ✗ "The patient is experiencing..."
+  ✗ "The patient reports..."
+  ✗ "The patient has..."
+  ✗ "Patient is likely suffering from..."
+  ✗ Any full sentence with a subject and predicate
+
+CORRECT style — telegraphic, uppercase, no articles:
+  ✓ "FEVER > 100°F × 2 DAYS"
+  ✓ "PAIN LRQ — SUDDEN ONSET, WORSENING"
+  ✓ "NAUSEA +, VOMITING -, APPETITE LOST"
+  ✓ "NO KNOWN COMORBIDITIES / ALLERGIES"
+  ✓ "NON-SMOKER. OCCASIONAL ALCOHOL"
+  ✓ "ACUTE APPENDICITIS — PROVISIONAL"
+  ✓ "H/O HYPOTHYROIDISM — ON TAB THYRONORM 50MCG"
+
+Use "+" for symptoms present, "-" for absent.
+Use "H/O" for history of.
+Use "×" or "x" for duration (e.g. "× 3 DAYS").
+Use "/" to link related items.
+ALL subjective bullets and assessment bullets MUST be UPPERCASE.
+content field MUST be null for subjective and assessment — use bullets only.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION GUIDANCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SUBJECTIVE — Sub-headings to use (only if content exists):
+  - "Chief Complaint": the main reason for visit as shorthand
+    e.g. "FEVER > 100°F × 2 DAYS" or "PAIN ABDOMEN LRQ SINCE YESTERDAY"
+  - "Past Medical History": known conditions + ongoing medications
+    e.g. "H/O HYPOTHYROIDISM — ON TAB THYRONORM 50MCG" or "NO KNOWN COMORBIDITIES"
+  - "History of Present Illness": onset, course, character, location, radiation
+    e.g. "SUDDEN ONSET. PERIUMBILICAL → RIF. CONSTANT. WORSENS ON MOVEMENT"
+  - "Associated Symptoms": one bullet per symptom group
+    e.g. "NAUSEA +, VOMITING -", "FEVER +, CHILLS +", "APPETITE LOST"
+  - "Social History": one bullet per relevant fact
+    e.g. "NON-SMOKER", "OCCASIONAL ALCOHOL", "NO FAMILY H/O SIMILAR ILLNESS"
+
+OBJECTIVE — Sub-headings (only if data is present):
   - "Vitals": each as its own bullet — "Weight: X kg", "Pulse: X bpm", "BP: XXX/XX mmHg"
-  - "Lab Values": any test results mentioned — "TSH: 4.6", "Vit D: Low", "HbA1c: 7.2%"
-  - "Physical Examination": clinical exam findings (tenderness, guarding, etc.)
+  - "Lab Values": any results mentioned — "TSH: 4.6", "Vit D: LOW", "HbA1c: 7.2%"
+  - "Physical Examination": findings as bullets — "TENDERNESS RIF +", "REBOUND TENDERNESS +", "GUARDING +"
 
-ASSESSMENT:
-  - "Impression": primary diagnosis or working diagnosis (1-2 sentences)
-  - "Differential Diagnoses": alternative diagnoses if discussed (as bullets)
+ASSESSMENT — Write as clinical shorthand:
+  - "Impression": the working/provisional diagnosis in UPPERCASE
+    e.g. "ACUTE APPENDICITIS — PROVISIONAL", "VIRAL FEVER", "HYPOTHYROIDISM — POORLY CONTROLLED"
+  - "Differential Diagnoses": other possibilities if discussed — UPPERCASE bullets
+    e.g. "MESENTERIC LYMPHADENITIS (R/O)", "OVARIAN CYST (R/O)"
 
-PLAN — CRITICAL — Use these exact sub-headings:
-  - "Medications": EACH bullet = one complete prescription line in FULL clinical format:
+PLAN — Keep these exact sub-headings:
+  - "Medications": EACH bullet = one complete prescription line:
     "[FORM] [DRUG NAME] [STRENGTH] [ROUTE] [FREQUENCY] [DURATION] [SPECIAL INSTRUCTIONS]"
     Examples:
-      "TAB THYRONORM 50MCG ORALLY ONCE DAILY EMPTY STOMACH BEFORE BREAKFAST - TO CONTINUE"
-      "SYP ARACHITOL 5ML ORALLY ONCE A WEEK X 3 MONTHS"
-      "CAP DOXYCYCLINE 100MG ORALLY TWICE DAILY X 7 DAYS WITH FOOD"
+      "TAB THYRONORM 50MCG ORALLY ONCE DAILY EMPTY STOMACH BEFORE BREAKFAST — TO CONTINUE"
+      "SYP ARACHITOL 5ML ORALLY ONCE A WEEK × 3 MONTHS"
       "TAB PAN 40MG ORALLY SOS IN CASE OF ACIDITY"
     Extract EVERY medication mentioned including continuing ones.
-  - "Advice": non-medication patient instructions as individual bullets
-    e.g. "NO ALCOHOLIC DRINK FOR 48 HRS", "INCREASE WATER INTAKE", "REST"
-  - "Investigations": SPECIFIC test/investigation names as individual bullets
-    e.g. "USG Abdomen and Pelvis", "Complete Blood Count (CBC)", "TSH", "Vitamin D levels"
-    Do NOT use vague terms like "further tests" — name each investigation specifically.
-  - "Follow-up": single follow-up instruction as the content field
+  - "Advice": non-medication instructions — UPPERCASE shorthand bullets
+    e.g. "NO ALCOHOL FOR 48 HRS", "INCREASE FLUID INTAKE", "BED REST"
+  - "Investigations": SPECIFIC test names as individual bullets
+    e.g. "USG Abdomen and Pelvis", "CBC", "TSH", "Vitamin D levels"
+    Do NOT write vague terms like "further tests".
+  - "Follow-up": single instruction as the content field
     e.g. "Follow up after 1 week for evaluation"
 
-SCHEMA:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SCHEMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 {
   "subjective": {
     "subsections": [
       {
-        "heading": "Sub-heading chosen from guidance above",
-        "content": "Narrative paragraph or null if only bullets used",
-        "bullets": ["Bullet point; use [] if none"]
+        "heading": "Chief Complaint",
+        "content": null,
+        "bullets": ["UPPERCASE SHORTHAND FACT"]
+      },
+      {
+        "heading": "History of Present Illness",
+        "content": null,
+        "bullets": ["UPPERCASE SHORTHAND FACT"]
       }
     ]
   },
@@ -121,8 +165,8 @@ SCHEMA:
     "subsections": [
       {
         "heading": "Impression",
-        "content": "Diagnosis or working impression",
-        "bullets": []
+        "content": null,
+        "bullets": ["DIAGNOSIS — PROVISIONAL/CONFIRMED"]
       }
     ]
   },
@@ -136,16 +180,16 @@ SCHEMA:
       {
         "heading": "Advice",
         "content": null,
-        "bullets": ["Patient instruction"]
+        "bullets": ["UPPERCASE INSTRUCTION"]
       },
       {
         "heading": "Investigations",
         "content": null,
-        "bullets": ["Specific investigation name"]
+        "bullets": ["Specific test name"]
       },
       {
         "heading": "Follow-up",
-        "content": "Follow up instruction text",
+        "content": "Follow up instruction",
         "bullets": []
       }
     ]
@@ -159,6 +203,7 @@ SCHEMA:
 
 CONVERSATION:
 """ + conversation_json
+
 
 
 def _strip_markdown_fences(text: str) -> str:
