@@ -6,14 +6,11 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from sqlalchemy import func
 from passlib.hash import bcrypt as passlib_bcrypt
 from passlib.hash import pbkdf2_sha256
-from pydub import AudioSegment
-
 from app.core.config import MAX_UPLOAD_SIZE_BYTES, TEMP_AUDIO_DIR
 from app.db.models import Doctor, DoctorEmbedding
 from app.db.session import SessionLocal
 from app.services.model_registry import load_models, registry
 from app.services.auth_service import create_access_token, verify_password
-from live_chunk_with_speaker import get_embedding
 
 router = APIRouter(prefix="/doctor", tags=["doctor"])
 
@@ -74,6 +71,13 @@ def enroll_doctor(
 
     for upload in uploads:
         _validate_audio_upload(upload)
+
+    # Deferred ML imports — only needed when actually enrolling
+    try:
+        from pydub import AudioSegment  # noqa: PLC0415
+        from live_chunk_with_speaker import get_embedding  # noqa: PLC0415
+    except ImportError as exc:
+        raise HTTPException(status_code=503, detail=f"ML packages not installed: {exc}") from exc
 
     load_models()
     if registry.spk_model is None or registry.device is None:

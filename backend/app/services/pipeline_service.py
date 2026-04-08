@@ -2,17 +2,20 @@ from typing import Dict
 from uuid import uuid4
 from uuid import UUID
 
-import torch
-import torch.nn.functional as F
 from app.core.config import OUTPUT_DIR
 from app.db.models import Doctor, DoctorEmbedding, Patient, Report, SessionModel
 from app.db.session import SessionLocal
-from live_chunk_with_speaker import process_audio
 from app.services.model_registry import load_models, registry
-from services.pdf_service import generate_pdf
 
 
 def run_pipeline(audio_path: str, doctor_id: str, patient_name: str) -> Dict:
+    # Defer heavy ML imports — only needed at call time
+    import torch
+    import torch.nn.functional as F
+    import sys, os
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..'))
+    from live_chunk_with_speaker import process_audio  # noqa: PLC0415
+    from services.pdf_service import generate_pdf  # noqa: PLC0415
     """
     Orchestrates full pipeline execution.
     """
