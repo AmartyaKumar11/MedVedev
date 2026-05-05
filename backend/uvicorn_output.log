@@ -1,0 +1,409 @@
+﻿python : INFO:     
+Started server process 
+[28856]
+At line:1 char:112
++ ... dvedev.db"; python 
+-m uvicorn app.main:app 
+--host 0.0.0.0 --port 
+8000 ...
++                 ~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo        
+      : NotSpecified: (I  
+  NFO:     Started serv   
+ er process [28856]:St    
+ring) [], RemoteExcep    
+tion
+    + FullyQualifiedError 
+   Id : NativeCommandErr  
+  or
+ 
+INFO:     Waiting for 
+application startup.
+ERROR:    Traceback (most 
+recent call last):
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\visitors.
+py", line 134, in 
+_compiler_dispatch
+    meth = getter(visitor)
+AttributeError: 
+'SQLiteTypeCompiler' 
+object has no attribute 
+'visit_ARRAY'. Did you 
+mean: 'visit_REAL'?
+
+The above exception was 
+the direct cause of the 
+following exception:
+
+Traceback (most recent 
+call last):
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\compiler.
+py", line 6840, in 
+visit_create_table
+    processed = 
+self.process(
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\compiler.
+py", line 947, in process
+    return obj._compiler_d
+ispatch(self, **kwargs)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\visitors.
+py", line 138, in 
+_compiler_dispatch
+    return meth(self, 
+**kw)  # type: ignore  # 
+noqa: E501
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\compiler.
+py", line 6871, in 
+visit_create_column
+    text = self.get_column
+_specification(column, 
+first_pk=first_pk)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\dialects\sqli
+te\base.py", line 1703, 
+in 
+get_column_specification
+    coltype = self.dialect
+.type_compiler_instance.pr
+ocess(
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\compiler.
+py", line 992, in process
+    return type_._compiler
+_dispatch(self, **kw)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\visitors.
+py", line 136, in 
+_compiler_dispatch
+    return visitor.visit_u
+nsupported_compilation(sel
+f, err, **kw)  # type: 
+ignore  # noqa: E501
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\compiler.
+py", line 997, in visit_un
+supported_compilation
+    raise exc.UnsupportedC
+ompilationError(self, 
+element) from err
+sqlalchemy.exc.Unsupported
+CompilationError: 
+Compiler <sqlalchemy.diale
+cts.sqlite.base.SQLiteType
+Compiler object at 
+0x0000020A4D2962F0> can't 
+render element of type 
+ARRAY (Background on this 
+error at: https://sqlalche
+.me/e/20/l7de)
+
+The above exception was 
+the direct cause of the 
+following exception:
+
+Traceback (most recent 
+call last):
+  File "C:\Users\ASUS\Down
+loads\MedVedev-main\MedVed
+ev-main\backend\app\db\ses
+sion.py", line 33, in 
+init_db
+    Base.metadata.create_a
+ll(bind=engine)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\schema.py
+", line 5931, in 
+create_all
+    bind._run_ddl_visitor(
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\engine\base.p
+y", line 3268, in 
+_run_ddl_visitor
+    conn._run_ddl_visitor(
+visitorcallable, element, 
+**kwargs)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\engine\base.p
+y", line 2467, in 
+_run_ddl_visitor
+    
+).traverse_single(element)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\visitors.
+py", line 661, in 
+traverse_single
+    return meth(obj, **kw)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\ddl.py", 
+line 984, in 
+visit_metadata
+    self.traverse_single(
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\visitors.
+py", line 661, in 
+traverse_single
+    return meth(obj, **kw)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\ddl.py", 
+line 1022, in visit_table
+    )._invoke_with(self.co
+nnection)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\ddl.py", 
+line 321, in _invoke_with
+    return 
+bind.execute(self)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\engine\base.p
+y", line 1419, in execute
+    return meth(
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\ddl.py", 
+line 187, in 
+_execute_on_connection
+    return 
+connection._execute_ddl(
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\engine\base.p
+y", line 1527, in 
+_execute_ddl
+    compiled = 
+ddl.compile(
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\elements.
+py", line 312, in compile
+    return 
+self._compiler(dialect, 
+**kw)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\ddl.py", 
+line 76, in _compiler
+    return dialect.ddl_com
+piler(dialect, self, **kw)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\compiler.
+py", line 901, in __init__
+    self.string = self.pro
+cess(self.statement, 
+**compile_kwargs)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\compiler.
+py", line 947, in process
+    return obj._compiler_d
+ispatch(self, **kwargs)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\visitors.
+py", line 138, in 
+_compiler_dispatch
+    return meth(self, 
+**kw)  # type: ignore  # 
+noqa: E501
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\sqlalchemy\sql\compiler.
+py", line 6850, in 
+visit_create_table
+    raise 
+exc.CompileError(
+sqlalchemy.exc.CompileErro
+r: (in table 
+'doctor_embeddings', 
+column 'embedding'): 
+Compiler <sqlalchemy.diale
+cts.sqlite.base.SQLiteType
+Compiler object at 
+0x0000020A4D2962F0> can't 
+render element of type 
+ARRAY
+
+The above exception was 
+the direct cause of the 
+following exception:
+
+Traceback (most recent 
+call last):
+  File "C:\Users\ASUS\Down
+loads\MedVedev-main\MedVed
+ev-main\backend\app\main.p
+y", line 37, in 
+startup_event
+    init_db()
+  File "C:\Users\ASUS\Down
+loads\MedVedev-main\MedVed
+ev-main\backend\app\db\ses
+sion.py", line 35, in 
+init_db
+    raise 
+RuntimeError(f"Database 
+initialization failed: 
+{str(e)}") from e
+RuntimeError: Database 
+initialization failed: 
+(in table 
+'doctor_embeddings', 
+column 'embedding'): 
+Compiler <sqlalchemy.diale
+cts.sqlite.base.SQLiteType
+Compiler object at 
+0x0000020A4D2962F0> can't 
+render element of type 
+ARRAY
+
+During handling of the 
+above exception, another 
+exception occurred:
+
+Traceback (most recent 
+call last):
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\starlette\routing.py", 
+line 694, in lifespan
+    async with self.lifesp
+an_context(app) as 
+maybe_state:
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\contextlib.p
+y", line 199, in 
+__aenter__
+    return await 
+anext(self.gen)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\fastapi\routing.py", 
+line 153, in 
+merged_lifespan
+    async with 
+original_context(app) as 
+maybe_original_state:
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\contextlib.p
+y", line 199, in 
+__aenter__
+    return await 
+anext(self.gen)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\fastapi\routing.py", 
+line 153, in 
+merged_lifespan
+    async with 
+original_context(app) as 
+maybe_original_state:
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\contextlib.p
+y", line 199, in 
+__aenter__
+    return await 
+anext(self.gen)
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\fastapi\routing.py", 
+line 153, in 
+merged_lifespan
+    async with 
+original_context(app) as 
+maybe_original_state:
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\starlette\routing.py", 
+line 571, in __aenter__
+    await 
+self._router.startup()
+  File "C:\Users\ASUS\AppD
+ata\Local\Programs\Python\
+Python310\lib\site-package
+s\starlette\routing.py", 
+line 673, in startup
+    handler()
+  File "C:\Users\ASUS\Down
+loads\MedVedev-main\MedVed
+ev-main\backend\app\main.p
+y", line 39, in 
+startup_event
+    raise 
+RuntimeError(f"Database 
+initialization failed: 
+{str(e)}")
+RuntimeError: Database 
+initialization failed: 
+Database initialization 
+failed: (in table 
+'doctor_embeddings', 
+column 'embedding'): 
+Compiler <sqlalchemy.diale
+cts.sqlite.base.SQLiteType
+Compiler object at 
+0x0000020A4D2962F0> can't 
+render element of type 
+ARRAY
+
+ERROR:    Application 
+startup failed. Exiting.
+Starting Medvedev backend...

@@ -1,0 +1,114 @@
+﻿web/app/consultation/ConsultationClient.tsx(7,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/app/consultation/ConsultationClient.tsx(8,29): error TS2307: Cannot find module '@/components/MicRecorder' or its corresponding type declarations.
+web/app/consultation/ConsultationClient.tsx(9,25): error TS2307: Cannot find module '@/components/Sidebar' or its corresponding type declarations.
+web/app/consultation/ConsultationClient.tsx(10,28): error TS2307: Cannot find module '@/components/SOAPViewer' or its corresponding type declarations.
+web/app/consultation/ConsultationClient.tsx(11,24): error TS2307: Cannot find module '@/components/Topbar' or its corresponding type declarations.
+web/app/consultation/ConsultationClient.tsx(12,34): error TS2307: Cannot find module '@/components/TranscriptViewer' or its corresponding type declarations.
+web/app/consultation/ConsultationClient.tsx(13,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+web/app/consultation/ConsultationClient.tsx(14,58): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+web/app/consultation/ConsultationClient.tsx(15,29): error TS2307: Cannot find module '@/lib/store' or its corresponding type declarations.
+web/app/consultation/ConsultationClient.tsx(21,31): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/consultation/ConsultationClient.tsx(22,43): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/consultation/ConsultationClient.tsx(23,35): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/consultation/ConsultationClient.tsx(24,38): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/consultation/ConsultationClient.tsx(25,29): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/consultation/ConsultationClient.tsx(26,32): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/consultation/ConsultationClient.tsx(141,40): error TS7006: Parameter 'p' implicitly has an 'any' type.
+web/app/consultation/ConsultationClient.tsx(164,20): error TS7006: Parameter 'p' implicitly has an 'any' type.
+web/app/consultation/ConsultationClient.tsx(165,18): error TS7006: Parameter 'a' implicitly has an 'any' type.
+web/app/consultation/ConsultationClient.tsx(165,21): error TS7006: Parameter 'b' implicitly has an 'any' type.
+web/app/consultation/page.tsx(3,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/app/consultation/page.tsx(4,36): error TS2307: Cannot find module '@/app/consultation/ConsultationClient' or its corresponding type declarations.
+web/app/dashboard/DashboardClient.tsx(7,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/app/dashboard/DashboardClient.tsx(8,29): error TS2307: Cannot find module '@/components/PatientCard' or its corresponding type declarations.
+web/app/dashboard/DashboardClient.tsx(9,25): error TS2307: Cannot find module '@/components/Sidebar' or its corresponding type declarations.
+web/app/dashboard/DashboardClient.tsx(10,24): error TS2307: Cannot find module '@/components/Topbar' or its corresponding type declarations.
+web/app/dashboard/DashboardClient.tsx(11,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+web/app/dashboard/DashboardClient.tsx(12,23): error TS2307: Cannot find module '@/components/ui/input' or its corresponding type declarations.
+web/app/dashboard/DashboardClient.tsx(13,32): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+web/app/dashboard/DashboardClient.tsx(14,29): error TS2307: Cannot find module '@/lib/store' or its corresponding type declarations.
+web/app/dashboard/DashboardClient.tsx(21,31): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/dashboard/DashboardClient.tsx(22,43): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/dashboard/DashboardClient.tsx(103,32): error TS7006: Parameter 'e' implicitly has an 'any' type.
+web/app/dashboard/page.tsx(1,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/app/dashboard/page.tsx(4,33): error TS2307: Cannot find module '@/app/dashboard/DashboardClient' or its corresponding type declarations.
+web/app/layout.tsx(3,31): error TS2307: Cannot find module '@/components/theme-provider' or its corresponding type declarations.
+web/app/page.tsx(3,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/app/page.tsx(4,29): error TS2307: Cannot find module '@/components/theme-toggle' or its corresponding type declarations.
+web/app/page.tsx(5,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+web/app/patients/[id]/page.tsx(7,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/app/patients/[id]/page.tsx(8,25): error TS2307: Cannot find module '@/components/Sidebar' or its corresponding type declarations.
+web/app/patients/[id]/page.tsx(9,24): error TS2307: Cannot find module '@/components/Topbar' or its corresponding type declarations.
+web/app/patients/[id]/page.tsx(10,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+web/app/patients/[id]/page.tsx(11,49): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+web/app/patients/[id]/page.tsx(12,29): error TS2307: Cannot find module '@/lib/store' or its corresponding type declarations.
+web/app/patients/[id]/page.tsx(19,31): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/patients/new/page.tsx(7,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/app/patients/new/page.tsx(8,25): error TS2307: Cannot find module '@/components/Sidebar' or its corresponding type declarations.
+web/app/patients/new/page.tsx(9,24): error TS2307: Cannot find module '@/components/Topbar' or its corresponding type declarations.
+web/app/patients/new/page.tsx(10,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+web/app/patients/new/page.tsx(11,23): error TS2307: Cannot find module '@/components/ui/input' or its corresponding type declarations.
+web/app/patients/new/page.tsx(12,29): error TS2307: Cannot find module '@/lib/store' or its corresponding type declarations.
+web/app/patients/new/page.tsx(16,31): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/patients/new/page.tsx(73,30): error TS7006: Parameter 'e' implicitly has an 'any' type.
+web/app/patients/new/page.tsx(84,30): error TS7006: Parameter 'e' implicitly has an 'any' type.
+web/app/patients/new/page.tsx(98,30): error TS7006: Parameter 'e' implicitly has an 'any' type.
+web/app/report/[id]/page.tsx(7,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/app/report/[id]/page.tsx(8,25): error TS2307: Cannot find module '@/components/Sidebar' or its corresponding type declarations.
+web/app/report/[id]/page.tsx(9,28): error TS2307: Cannot find module '@/components/SOAPViewer' or its corresponding type declarations.
+web/app/report/[id]/page.tsx(10,24): error TS2307: Cannot find module '@/components/Topbar' or its corresponding type declarations.
+web/app/report/[id]/page.tsx(11,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+web/app/report/[id]/page.tsx(12,49): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+web/app/report/[id]/page.tsx(13,29): error TS2307: Cannot find module '@/lib/store' or its corresponding type declarations.
+web/app/report/[id]/page.tsx(20,31): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/report/[id]/page.tsx(21,33): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/report/[id]/page.tsx(22,40): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/report/[id]/page.tsx(23,29): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/report/[id]/page.tsx(63,39): error TS7006: Parameter 'p' implicitly has an 'any' type.
+web/app/signin/page.tsx(7,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/app/signin/page.tsx(8,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+web/app/signin/page.tsx(9,23): error TS2307: Cannot find module '@/components/ui/input' or its corresponding type declarations.
+web/app/signin/page.tsx(10,23): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+web/app/signin/page.tsx(11,29): error TS2307: Cannot find module '@/lib/store' or its corresponding type declarations.
+web/app/signin/page.tsx(15,34): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/app/signin/page.tsx(78,28): error TS7006: Parameter 'e' implicitly has an 'any' type.
+web/app/signin/page.tsx(91,28): error TS7006: Parameter 'e' implicitly has an 'any' type.
+web/app/signup/page.tsx(7,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/app/signup/page.tsx(8,35): error TS2307: Cannot find module '@/components/AudioRecorderCard' or its corresponding type declarations.
+web/app/signup/page.tsx(9,33): error TS2307: Cannot find module '@/components/AudioUploadCard' or its corresponding type declarations.
+web/app/signup/page.tsx(10,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+web/app/signup/page.tsx(11,23): error TS2307: Cannot find module '@/components/ui/input' or its corresponding type declarations.
+web/app/signup/page.tsx(12,26): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+web/app/signup/page.tsx(158,28): error TS7006: Parameter 'e' implicitly has an 'any' type.
+web/app/signup/page.tsx(167,28): error TS7006: Parameter 'e' implicitly has an 'any' type.
+web/app/signup/page.tsx(182,28): error TS7006: Parameter 'e' implicitly has an 'any' type.
+web/app/signup/page.tsx(242,28): error TS7006: Parameter 'f' implicitly has an 'any' type.
+web/app/signup/page.tsx(248,28): error TS7006: Parameter 'f' implicitly has an 'any' type.
+web/components/AudioRecorderCard.tsx(5,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/components/AudioRecorderCard.tsx(6,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+web/components/AudioRecorderCard.tsx(7,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+web/components/AudioUploadCard.tsx(5,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/components/AudioUploadCard.tsx(6,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+web/components/AudioUploadCard.tsx(7,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+web/components/GlassCard.tsx(3,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+web/components/MicRecorder.tsx(5,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/components/MicRecorder.tsx(6,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+web/components/MicRecorder.tsx(7,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+web/components/PatientCard.tsx(1,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/components/PatientCard.tsx(2,30): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+web/components/Sidebar.tsx(6,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/components/Sidebar.tsx(7,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+web/components/Sidebar.tsx(8,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+web/components/Sidebar.tsx(9,29): error TS2307: Cannot find module '@/lib/store' or its corresponding type declarations.
+web/components/Sidebar.tsx(20,31): error TS7006: Parameter 's' implicitly has an 'any' type.
+web/components/SOAPViewer.tsx(1,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/components/SOAPViewer.tsx(2,31): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+web/components/theme-toggle.tsx(7,24): error TS2307: Cannot find module '@/components/ui/button' or its corresponding type declarations.
+web/components/Topbar.tsx(3,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/components/Topbar.tsx(4,29): error TS2307: Cannot find module '@/components/theme-toggle' or its corresponding type declarations.
+web/components/TranscriptViewer.tsx(1,27): error TS2307: Cannot find module '@/components/GlassCard' or its corresponding type declarations.
+web/components/TranscriptViewer.tsx(2,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+web/components/TranscriptViewer.tsx(3,37): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.
+web/components/ui/button.tsx(5,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+web/components/ui/input.tsx(3,20): error TS2307: Cannot find module '@/lib/utils' or its corresponding type declarations.
+web/lib/store.ts(3,64): error TS2307: Cannot find module '@/lib/api' or its corresponding type declarations.

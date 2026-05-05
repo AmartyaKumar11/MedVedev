@@ -1,0 +1,369 @@
+"""LLM client for SOAP note generation (Moonshot Kimi or NVIDIA NIM / build.nvidia)."""
+
+from __future__ import annotations
+
+import json
+import os
+import urllib.error
+import urllib.request
+from pathlib import Path
+from typing import Any
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None  # type: ignore[misc, assignment]
+
+_BACKEND_DIR = Path(__file__).resolve().parent.parent
+if load_dotenv is not None:
+    load_dotenv(_BACKEND_DIR / ".env")
+    load_dotenv()  # cwd fallback
+
+# OpenAI-compatible chat completions (NVIDIA NIM)
+NVIDIA_CHAT_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
+DEFAULT_NVIDIA_MODEL = "meta/llama-3.1-8b-instruct"
+
+# Moonshot (China)
+MOONSHOT_CHAT_URL = "https://api.moonshot.cn/v1/chat/completions"
+DEFAULT_MOONSHOT_MODEL = "moonshot-v1-8k"
+
+
+def resolve_llm_endpoint(api_key: str) -> tuple[str, str]:
+    """
+    Return (chat_completions_url, model_name).
+
+    - Keys from build.nvidia.com start with ``nvapi-`` → NVIDIA NIM endpoint.
+    - ``LLM_PROVIDER=nvidia`` or ``moonshot`` overrides auto-detection.
+    """
+    p = os.environ.get("LLM_PROVIDER", "").strip().lower()
+    if p == "moonshot":
+        return MOONSHOT_CHAT_URL, DEFAULT_MOONSHOT_MODEL
+    if p == "nvidia":
+        model = os.environ.get("NVIDIA_LLM_MODEL", DEFAULT_NVIDIA_MODEL).strip()
+        return NVIDIA_CHAT_URL, model or DEFAULT_NVIDIA_MODEL
+    if api_key.startswith("nvapi-"):
+        model = os.environ.get("NVIDIA_LLM_MODEL", DEFAULT_NVIDIA_MODEL).strip()
+        return NVIDIA_CHAT_URL, model or DEFAULT_NVIDIA_MODEL
+    return MOONSHOT_CHAT_URL, DEFAULT_MOONSHOT_MODEL
+
+
+def _build_prompt(conversation_json: str) -> str:
+    return """You are a clinical documentation assistant generating a doctor's prescription record.
+
+Convert the following doctor-patient conversation into a structured SOAP note.
+
+STRICT RULES:
+- Do NOT hallucinate
+- Do NOT add information beyond what is explicitly said in the conversation
+- Only extract information present in the conversation
+- If data is missing, use empty arrays [] or null
+- Normalize Hinglish or informal language into proper clinical English
+- Output STRICT JSON only (no explanation, no markdown fences)
+- Use "subsections" arrays for all four SOAP sections as defined in the SCHEMA
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+WRITING STYLE — CRITICAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SUBJECTIVE and ASSESSMENT must be written in UPPERCASE CLINICAL SHORTHAND.
+This is how real doctors write prescription notes — not like a medical essay.
+
+BANNED phrases (never use these):
+  ✗ "The patient is experiencing..."
+  ✗ "The patient reports..."
+  ✗ "The patient has..."
+  ✗ "Patient is likely suffering from..."
+  ✗ Any full sentence with a subject and predicate
+
+CORRECT style — telegraphic, uppercase, no articles:
+  ✓ "FEVER > 100°F × 2 DAYS"
+  ✓ "PAIN LRQ — SUDDEN ONSET, WORSENING"
+  ✓ "NAUSEA +, VOMITING -, APPETITE LOST"
+  ✓ "NO KNOWN COMORBIDITIES / ALLERGIES"
+  ✓ "NON-SMOKER. OCCASIONAL ALCOHOL"
+  ✓ "ACUTE APPENDICITIS — PROVISIONAL"
+  ✓ "H/O HYPOTHYROIDISM — ON TAB THYRONORM 50MCG"
+
+Use "+" for symptoms present, "-" for absent.
+Use "H/O" for history of.
+Use "×" or "x" for duration (e.g. "× 3 DAYS").
+Use "/" to link related items.
+ALL subjective bullets and assessment bullets MUST be UPPERCASE.
+content field MUST be null for subjective and assessment — use bullets only.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION GUIDANCE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SUBJECTIVE — Sub-headings to use (only if content exists):
+  - "Chief Complaint": the main reason for visit as shorthand
+    e.g. "FEVER > 100°F × 2 DAYS" or "PAIN ABDOMEN LRQ SINCE YESTERDAY"
+  - "Past Medical History": known conditions + ongoing medications
+    e.g. "H/O HYPOTHYROIDISM — ON TAB THYRONORM 50MCG" or "NO KNOWN COMORBIDITIES"
+  - "History of Present Illness": onset, course, character, location, radiation
+    e.g. "SUDDEN ONSET. PERIUMBILICAL → RIF. CONSTANT. WORSENS ON MOVEMENT"
+  - "Associated Symptoms": one bullet per symptom group
+    e.g. "NAUSEA +, VOMITING -", "FEVER +, CHILLS +", "APPETITE LOST"
+  - "Social History": one bullet per relevant fact
+    e.g. "NON-SMOKER", "OCCASIONAL ALCOHOL", "NO FAMILY H/O SIMILAR ILLNESS"
+
+OBJECTIVE — Sub-headings (only if data is present):
+  - "Vitals": each as its own bullet — "Weight: X kg", "Pulse: X bpm", "BP: XXX/XX mmHg"
+  - "Lab Values": any results mentioned — "TSH: 4.6", "Vit D: LOW", "HbA1c: 7.2%"
+  - "Physical Examination": findings as bullets — "TENDERNESS RIF +", "REBOUND TENDERNESS +", "GUARDING +"
+
+ASSESSMENT — Write as clinical shorthand:
+  - "Impression": the working/provisional diagnosis in UPPERCASE
+    e.g. "ACUTE APPENDICITIS — PROVISIONAL", "VIRAL FEVER", "HYPOTHYROIDISM — POORLY CONTROLLED"
+  - "Differential Diagnoses": other possibilities if discussed — UPPERCASE bullets
+    e.g. "MESENTERIC LYMPHADENITIS (R/O)", "OVARIAN CYST (R/O)"
+
+PLAN — Keep these exact sub-headings:
+  - "Medications": EACH bullet = one complete prescription line:
+    "[FORM] [DRUG NAME] [STRENGTH] [ROUTE] [FREQUENCY] [DURATION] [SPECIAL INSTRUCTIONS]"
+    Examples:
+      "TAB THYRONORM 50MCG ORALLY ONCE DAILY EMPTY STOMACH BEFORE BREAKFAST — TO CONTINUE"
+      "SYP ARACHITOL 5ML ORALLY ONCE A WEEK × 3 MONTHS"
+      "TAB PAN 40MG ORALLY SOS IN CASE OF ACIDITY"
+    Extract EVERY medication mentioned including continuing ones.
+  - "Advice": non-medication instructions — UPPERCASE shorthand bullets
+    e.g. "NO ALCOHOL FOR 48 HRS", "INCREASE FLUID INTAKE", "BED REST"
+  - "Investigations": SPECIFIC test names as individual bullets
+    e.g. "USG Abdomen and Pelvis", "CBC", "TSH", "Vitamin D levels"
+    Do NOT write vague terms like "further tests".
+  - "Follow-up": single instruction as the content field
+    e.g. "Follow up after 1 week for evaluation"
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SCHEMA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+{
+  "subjective": {
+    "subsections": [
+      {
+        "heading": "Chief Complaint",
+        "content": null,
+        "bullets": ["UPPERCASE SHORTHAND FACT"]
+      },
+      {
+        "heading": "History of Present Illness",
+        "content": null,
+        "bullets": ["UPPERCASE SHORTHAND FACT"]
+      }
+    ]
+  },
+  "objective": {
+    "subsections": [
+      {
+        "heading": "Vitals",
+        "content": null,
+        "bullets": ["Weight: X kg", "Pulse: X bpm", "BP: XXX/XX mmHg"]
+      }
+    ]
+  },
+  "assessment": {
+    "subsections": [
+      {
+        "heading": "Impression",
+        "content": null,
+        "bullets": ["DIAGNOSIS — PROVISIONAL/CONFIRMED"]
+      }
+    ]
+  },
+  "plan": {
+    "subsections": [
+      {
+        "heading": "Medications",
+        "content": null,
+        "bullets": ["FULL PRESCRIPTION LINE per drug"]
+      },
+      {
+        "heading": "Advice",
+        "content": null,
+        "bullets": ["UPPERCASE INSTRUCTION"]
+      },
+      {
+        "heading": "Investigations",
+        "content": null,
+        "bullets": ["Specific test name"]
+      },
+      {
+        "heading": "Follow-up",
+        "content": "Follow up instruction",
+        "bullets": []
+      }
+    ]
+  },
+  "meta": {
+    "language_detected": "",
+    "confidence": "",
+    "notes": ""
+  }
+}
+
+CONVERSATION:
+""" + conversation_json
+
+
+
+def _strip_markdown_fences(text: str) -> str:
+    text = text.strip()
+    if not text.startswith("```"):
+        return text
+    lines = text.split("\n")
+    if lines and lines[0].startswith("```"):
+        lines = lines[1:]
+    while lines and lines[-1].strip() in ("```", "`"):
+        lines = lines[:-1]
+    return "\n".join(lines).strip()
+
+
+def _extract_first_json_object(text: str) -> str | None:
+    """Return the first balanced `{ ... }` substring (handles strings and escapes)."""
+    start = text.find("{")
+    if start < 0:
+        return None
+    depth = 0
+    in_str = False
+    esc = False
+    for i in range(start, len(text)):
+        c = text[i]
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+        else:
+            if c == '"':
+                in_str = True
+            elif c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[start : i + 1]
+    return None
+
+
+def _parse_llm_json_content(content: str) -> dict[str, Any] | None:
+    """Parse strict JSON from LLM output; tolerate markdown fences and leading text."""
+    raw = content.strip()
+    variants = [
+        _strip_markdown_fences(raw),
+        raw,
+    ]
+    for v in variants:
+        for candidate in (v, _extract_first_json_object(v) or ""):
+            if not candidate.strip():
+                continue
+            try:
+                out = json.loads(candidate)
+                if isinstance(out, dict):
+                    return out
+            except json.JSONDecodeError:
+                continue
+    return None
+
+
+def generate_soap_note(conversation: list[dict[str, Any]]) -> dict[str, Any]:
+    """Call configured LLM API and return structured SOAP JSON or an error dict."""
+    if load_dotenv is not None:
+        load_dotenv(_BACKEND_DIR / ".env")
+        load_dotenv(Path.cwd() / ".env")
+
+    api_key = (
+        os.environ.get("KIMI_API_KEY")
+        or os.environ.get("MOONSHOT_API_KEY")
+        or os.environ.get("NVIDIA_API_KEY")
+        or ""
+    ).strip()
+    if not api_key or api_key == "your_key_here":
+        # Return a rich mock SOAP note when API key is missing for demonstration
+        return {
+            "subjective": {
+                "subsections": [
+                    {
+                        "heading": "Chief Complaint",
+                        "content": None,
+                        "bullets": ["CHEST TIGHTNESS IN MORNINGS", "NO PALPITATIONS"]
+                    }
+                ]
+            },
+            "objective": {
+                "subsections": [
+                    {
+                        "heading": "Vitals",
+                        "content": None,
+                        "bullets": ["Weight: 75 kg", "Pulse: 80 bpm", "BP: 120/80 mmHg"]
+                    }
+                ]
+            },
+            "assessment": {
+                "subsections": [
+                    {
+                        "heading": "Impression",
+                        "content": None,
+                        "bullets": ["NON-CARDIAC CHEST DISCOMFORT — PROVISIONAL"]
+                    }
+                ]
+            },
+            "plan": {
+                "subsections": [
+                    {
+                        "heading": "Medications",
+                        "content": None,
+                        "bullets": ["TAB PAN 40MG ORALLY SOS IN CASE OF ACIDITY"]
+                    },
+                    {
+                        "heading": "Follow-up",
+                        "content": "Follow up after 2 weeks",
+                        "bullets": []
+                    }
+                ]
+            }
+        }
+
+    url, model = resolve_llm_endpoint(api_key)
+
+    conversation_json = json.dumps({"conversation": conversation}, ensure_ascii=False)
+    prompt = _build_prompt(conversation_json)
+
+    payload = {
+        "model": model,
+        "temperature": 0,
+        "messages": [{"role": "user", "content": prompt}],
+    }
+
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        try:
+            err_body = e.read().decode("utf-8")
+        except Exception:
+            err_body = str(e)
+        return {"error": f"HTTP {e.code}: {err_body}"}
+    except Exception as e:
+        return {"error": str(e)}
+
+    try:
+        content = body["choices"][0]["message"]["content"]
+    except (KeyError, IndexError, TypeError) as e:
+        return {"error": f"Unexpected API response shape: {e}"}
+
+    parsed = _parse_llm_json_content(content)
+    if parsed is not None:
+        return parsed
+    return {"error": "Invalid JSON from LLM"}

@@ -1,0 +1,36 @@
+﻿INFO         | Android emulator version 35.3.11.0 (build_id 12836668) (CL:N/A)
+INFO         | Graphics backend: gfxstream
+INFO         | Found systemPath C:\Users\ASUS\AppData\Local\Android\Sdk\system-images\android-36\google_apis_playstore\x86_64\
+WARNING      | Please update the emulator to one that supports the feature(s): VulkanVirtualQueue
+INFO         | Increasing RAM size to 3072MB
+INFO         | IPv4 server found: 192.168.1.1
+INFO         | Ignore IPv6 address: 100d:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: 100d:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: 100d:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: 813:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: 813:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: 813:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: 381b:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: 381b:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: 381b:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: 5021:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: 5021:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: 5021:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: 7027:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: 7027:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: c832:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: c832:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: c832:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: e838:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: e838:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Ignore IPv6 address: e838:fbd9:2302:0:100d:fbd9:2302:0
+INFO         | Checking system compatibility:
+INFO         |   Checking: hasSufficientDiskSpace
+INFO         |      Ok: Disk space requirements to run avd: `Pixel_9_Pro` are met.
+INFO         |   Checking: hasSufficientHwGpu
+INFO         |      Ok: Hardware GPU requirements to run avd: `Pixel_9_Pro` are passed.
+INFO         |   Checking: hasSufficientSystem
+INFO         |      Ok: System requirements to run avd: `Pixel_9_Pro` are met.
+ERROR        | Running multiple emulators with the same AVD 
+ERROR        | is an experimental feature.
+ERROR        | Please use -read-only flag to enable this feature.
